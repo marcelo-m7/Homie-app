@@ -139,8 +139,11 @@ def init_db():
             item_name TEXT NOT NULL,
             completed BOOLEAN DEFAULT FALSE,
             added_by INTEGER NOT NULL,
+            completed_by INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (added_by) REFERENCES users (id)
+            completed_at TIMESTAMP,
+            FOREIGN KEY (added_by) REFERENCES users (id),
+            FOREIGN KEY (completed_by) REFERENCES users (id)
         )
     ''')
     
@@ -197,6 +200,20 @@ def init_db():
     # Add missing columns to existing tables (migrations)
     try:
         conn.execute('ALTER TABLE shopping_items ADD COLUMN completed BOOLEAN DEFAULT FALSE')
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
+    try:
+        conn.execute('ALTER TABLE shopping_items ADD COLUMN completed_by INTEGER')
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    
+    try:
+        conn.execute('ALTER TABLE shopping_items ADD COLUMN completed_at TIMESTAMP')
         conn.commit()
     except sqlite3.OperationalError:
         # Column already exists
