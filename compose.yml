@@ -1,0 +1,14 @@
+services:
+  homie:
+    image: ghcr.io/brramble/homie:latest
+    container_name: homie
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
