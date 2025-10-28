@@ -137,6 +137,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS shopping_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             item_name TEXT NOT NULL,
+            completed BOOLEAN DEFAULT FALSE,
             added_by INTEGER NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (added_by) REFERENCES users (id)
@@ -192,6 +193,14 @@ def init_db():
             value TEXT NOT NULL
         )
     ''')
+    
+    # Add missing columns to existing tables (migrations)
+    try:
+        conn.execute('ALTER TABLE shopping_items ADD COLUMN completed BOOLEAN DEFAULT FALSE')
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
     
     conn.commit()
     conn.close()
