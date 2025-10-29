@@ -11,30 +11,91 @@ logger = logging.getLogger(__name__)
 
 def get_oidc_configuration():
     """Get OIDC configuration with auto-discovery"""
+    oidc_base_url = os.getenv('OIDC_BASE_URL')
+    if not oidc_base_url:
+        logger.error("OIDC_BASE_URL environment variable is required")
+        return None
+    
+    # Build complete OIDC config with client credentials
+    config = {
+        'client_id': os.getenv('OIDC_CLIENT_ID', ''),
+        'client_secret': os.getenv('OIDC_CLIENT_SECRET', ''),
+    }
+    
+    # Try auto-discovery first
     try:
-        oidc_base_url = os.getenv('OIDC_BASE_URL')
-        if not oidc_base_url:
-            logger.error("OIDC_BASE_URL environment variable is required")
-            return None
-        
         discovery_url = urljoin(oidc_base_url, '/.well-known/openid_configuration')
+        logger.info(f"Attempting OIDC discovery at: {discovery_url}")
+        
         response = requests.get(discovery_url, timeout=10)
         response.raise_for_status()
         
-        config = response.json()
+        # Check if response has content
+        if not response.text.strip():
+            raise ValueError("Empty response from OIDC discovery endpoint")
         
-        return {
-            'issuer': config['issuer'],
-            'authorization_endpoint': config['authorization_endpoint'],
-            'token_endpoint': config['token_endpoint'],
-            'userinfo_endpoint': config['userinfo_endpoint'],
-            'jwks_uri': config['jwks_uri'],
-            'end_session_endpoint': config.get('end_session_endpoint', ''),
-            'scopes_supported': config.get('scopes_supported', ['openid', 'profile', 'email']),
-        }
+        try:
+            discovered_config = response.json()
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON from OIDC discovery endpoint. Response: {response.text[:200]}")
+            raise ValueError(f"Invalid JSON response: {e}")
+        
+        # Validate required fields
+        required_fields = ['issuer', 'authorization_endpoint', 'token_endpoint', 'userinfo_endpoint']
+        missing_fields = [field for field in required_fields if field not in discovered_config]
+        
+        if missing_fields:
+            raise ValueError(f"Missing required OIDC fields: {missing_fields}")
+        
+        # Use discovered endpoints
+        config.update({
+            'issuer': discovered_config['issuer'],
+            'authorization_endpoint': discovered_config['authorization_endpoint'],
+            'token_endpoint': discovered_config['token_endpoint'],
+            'userinfo_endpoint': discovered_config['userinfo_endpoint'],
+            'jwks_uri': discovered_config.get('jwks_uri', ''),
+            'end_session_endpoint': discovered_config.get('end_session_endpoint', ''),
+            'scopes_supported': discovered_config.get('scopes_supported', ['openid', 'profile', 'email']),
+        })
+        
+        logger.info("OIDC auto-discovery successful")
+        return config
+        
+    except requests.RequestException as e:
+        logger.warning(f"OIDC auto-discovery failed (network error): {e}")
+    except ValueError as e:
+        logger.warning(f"OIDC auto-discovery failed (invalid response): {e}")
     except Exception as e:
-        logger.error(f"Failed to fetch OIDC configuration: {e}")
+        logger.warning(f"OIDC auto-discovery failed (unexpected error): {e}")
+    
+    # Fallback to manual configuration
+    logger.info("Falling back to manual OIDC endpoint configuration")
+    
+    manual_config = {
+        'issuer': os.getenv('OIDC_ISSUER', oidc_base_url),
+        'authorization_endpoint': os.getenv('OIDC_AUTHORIZATION_ENDPOINT'),
+        'token_endpoint': os.getenv('OIDC_TOKEN_ENDPOINT'),
+        'userinfo_endpoint': os.getenv('OIDC_USERINFO_ENDPOINT'),
+        'jwks_uri': os.getenv('OIDC_JWKS_URI', ''),
+        'end_session_endpoint': os.getenv('OIDC_END_SESSION_ENDPOINT', ''),
+        'scopes_supported': ['openid', 'profile', 'email'],
+    }
+    
+    config.update(manual_config)
+    
+    # Validate that we have the minimum required endpoints
+    required_endpoints = ['authorization_endpoint', 'token_endpoint', 'userinfo_endpoint']
+    missing_endpoints = [ep for ep in required_endpoints if not config.get(ep)]
+    
+    if missing_endpoints:
+        logger.error(f"Missing required OIDC endpoints: {missing_endpoints}")
+        logger.error("Please set the following environment variables:")
+        for ep in missing_endpoints:
+            logger.error(f"  - {ep.upper()}")
         return None
+    
+    logger.info("Manual OIDC configuration loaded successfully")
+    return config
 
 def load_access_control():
     """Load access control configuration"""

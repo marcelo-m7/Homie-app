@@ -16,12 +16,13 @@ services:
       - FLASK_SECRET_KEY=your-very-secure-secret-key-here-change-this
       
       # OIDC Authentication (replace with your provider details)
-      - OIDC_ISSUER=https://your-oidc-provider.com
+      - OIDC_BASE_URL=https://your-oidc-provider.com
       - OIDC_CLIENT_ID=your-client-id
       - OIDC_CLIENT_SECRET=your-client-secret
       - OIDC_REDIRECT_URI=http://localhost:5000/auth/callback
       
       # Optional: Manual OIDC endpoints (if auto-discovery doesn't work)
+      # - OIDC_ISSUER=https://your-provider.com
       # - OIDC_AUTHORIZATION_ENDPOINT=https://your-provider.com/auth
       # - OIDC_TOKEN_ENDPOINT=https://your-provider.com/token
       # - OIDC_USERINFO_ENDPOINT=https://your-provider.com/userinfo

@@ -88,9 +88,9 @@ Each route module follows the same pattern:
 
 Required:
 - `SECRET_KEY` - Flask secret key
+- `OIDC_BASE_URL` - OIDC provider base URL (used for auto-discovery)
 - `OIDC_CLIENT_ID` - OIDC client identifier
 - `OIDC_CLIENT_SECRET` - OIDC client secret
-- `OIDC_BASE_URL` - OIDC provider base URL
 - `ALLOWED_EMAILS` - Comma-separated list of allowed user emails
 
 Optional:
