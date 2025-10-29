@@ -21,12 +21,18 @@ services:
       - OIDC_CLIENT_SECRET=your-client-secret
       - OIDC_REDIRECT_URI=http://localhost:5000/auth/callback
       
-      # Optional: Manual OIDC endpoints (if auto-discovery doesn't work)
-      # - OIDC_ISSUER=https://your-provider.com
+      # Manual OIDC endpoints (uncomment if auto-discovery fails)
+      # For Authentik (replace 'homie' with your application slug):
+      # - OIDC_ISSUER=https://auth.example.com/application/o/homie/
+      # - OIDC_AUTHORIZATION_ENDPOINT=https://auth.example.com/application/o/authorize/
+      # - OIDC_TOKEN_ENDPOINT=https://auth.example.com/application/o/token/
+      # - OIDC_USERINFO_ENDPOINT=https://auth.example.com/application/o/userinfo/
+      # - OIDC_END_SESSION_ENDPOINT=https://auth.example.com/application/o/homie/end-session/
+      
+      # For other providers:
       # - OIDC_AUTHORIZATION_ENDPOINT=https://your-provider.com/auth
       # - OIDC_TOKEN_ENDPOINT=https://your-provider.com/token
       # - OIDC_USERINFO_ENDPOINT=https://your-provider.com/userinfo
-      # - OIDC_END_SESSION_ENDPOINT=https://your-provider.com/logout
       
       # Access Control (comma-separated)
       - ALLOWED_EMAILS=user1@example.com,user2@example.com

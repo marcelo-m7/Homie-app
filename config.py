@@ -91,7 +91,8 @@ def get_oidc_configuration():
         logger.error(f"Missing required OIDC endpoints: {missing_endpoints}")
         logger.error("Please set the following environment variables:")
         for ep in missing_endpoints:
-            logger.error(f"  - {ep.upper()}")
+            env_var = f"OIDC_{ep.upper()}"
+            logger.error(f"  - {env_var}")
         return None
     
     logger.info("Manual OIDC configuration loaded successfully")
