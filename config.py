@@ -1,93 +1,90 @@
 """
-Configuration module for Homie Flask application
-Handles OIDC discovery, app configuration, and environment setup
+Configuration utilities for Homie Flask application
 """
 import os
+import json
+import logging
 import requests
-from dotenv import load_dotenv
+from urllib.parse import urljoin
 
-# Load environment variables
-load_dotenv()
+logger = logging.getLogger(__name__)
 
-def discover_oidc_endpoints(issuer):
-    """Auto-discover OIDC endpoints from issuer's well-known configuration"""
+def get_oidc_configuration():
+    """Get OIDC configuration with auto-discovery"""
     try:
-        well_known_url = f"{issuer}/.well-known/openid-configuration"
-        response = requests.get(well_known_url, timeout=10)
+        oidc_base_url = os.getenv('OIDC_BASE_URL')
+        if not oidc_base_url:
+            logger.error("OIDC_BASE_URL environment variable is required")
+            return None
+        
+        discovery_url = urljoin(oidc_base_url, '/.well-known/openid_configuration')
+        response = requests.get(discovery_url, timeout=10)
         response.raise_for_status()
+        
         config = response.json()
         
         return {
-            'authorization_endpoint': config.get('authorization_endpoint'),
-            'token_endpoint': config.get('token_endpoint'),
-            'userinfo_endpoint': config.get('userinfo_endpoint'),
-            'end_session_endpoint': config.get('end_session_endpoint'),
+            'issuer': config['issuer'],
+            'authorization_endpoint': config['authorization_endpoint'],
+            'token_endpoint': config['token_endpoint'],
+            'userinfo_endpoint': config['userinfo_endpoint'],
+            'jwks_uri': config['jwks_uri'],
+            'end_session_endpoint': config.get('end_session_endpoint', ''),
+            'scopes_supported': config.get('scopes_supported', ['openid', 'profile', 'email']),
         }
     except Exception as e:
-        print(f"Failed to discover OIDC endpoints: {e}")
-        # Fallback to manual configuration
-        return {
-            'authorization_endpoint': os.getenv('OIDC_AUTHORIZATION_ENDPOINT'),
-            'token_endpoint': os.getenv('OIDC_TOKEN_ENDPOINT'),
-            'userinfo_endpoint': os.getenv('OIDC_USERINFO_ENDPOINT'),
-            'end_session_endpoint': os.getenv('OIDC_END_SESSION_ENDPOINT'),
-        }
+        logger.error(f"Failed to fetch OIDC configuration: {e}")
+        return None
 
-class Config:
-    """Application configuration class"""
+def load_access_control():
+    """Load access control configuration"""
+    config = {
+        'admin_emails': [],
+        'allowed_emails': []
+    }
     
-    # Flask Configuration
-    SECRET_KEY = os.getenv('FLASK_SECRET_KEY')
-    SESSION_COOKIE_SECURE = os.getenv('FLASK_ENV') == 'production'
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    # Load from environment variables
+    admin_emails_str = os.getenv('ADMIN_EMAILS', '')
+    if admin_emails_str:
+        config['admin_emails'] = [email.strip() for email in admin_emails_str.split(',')]
     
-    # Database Configuration
-    DATABASE_PATH = '/app/data/homie.db'
+    allowed_emails_str = os.getenv('ALLOWED_EMAILS', '')
+    if allowed_emails_str:
+        config['allowed_emails'] = [email.strip() for email in allowed_emails_str.split(',')]
     
-    # OIDC Configuration
-    OIDC_ISSUER = os.getenv('OIDC_ISSUER')
-    OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID')
-    OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET')
-    OIDC_REDIRECT_URI = os.getenv('OIDC_REDIRECT_URI')
+    # If no allowed emails specified, use admin emails
+    if not config['allowed_emails']:
+        config['allowed_emails'] = config['admin_emails']
     
-    # Access Control
-    ALLOWED_EMAILS = [email.strip() for email in os.getenv('ALLOWED_EMAILS', '').split(',') if email.strip()]
-    ALLOWED_GROUPS = [group.strip() for group in os.getenv('ALLOWED_GROUPS', '').split(',') if group.strip()]
-    ADMIN_EMAILS = [email.strip() for email in os.getenv('ADMIN_EMAILS', '').split(',') if email.strip()]
+    return config
+
+def get_app_config():
+    """Get Flask application configuration"""
+    return {
+        'SECRET_KEY': os.getenv('SECRET_KEY', 'dev-key-change-in-production'),
+        'OIDC_CLIENT_ID': os.getenv('OIDC_CLIENT_ID', ''),
+        'OIDC_CLIENT_SECRET': os.getenv('OIDC_CLIENT_SECRET', ''),
+        'OIDC_BASE_URL': os.getenv('OIDC_BASE_URL', ''),
+        'BASE_URL': os.getenv('BASE_URL', 'http://localhost:5000'),
+        'RATELIMIT_STORAGE_URI': 'memory://',  # Use Redis in production
+        'SESSION_COOKIE_SECURE': os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true',
+        'SESSION_COOKIE_HTTPONLY': True,
+        'SESSION_COOKIE_SAMESITE': 'Lax',
+        'PERMANENT_SESSION_LIFETIME': 3600,  # 1 hour
+        'MAX_CONTENT_LENGTH': 16 * 1024 * 1024,  # 16MB max upload
+        'DEBUG': os.getenv('FLASK_DEBUG', 'False').lower() == 'true',
+    }
+
+def setup_logging():
+    """Setup application logging"""
+    log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     
-    # Security Configuration
-    ALLOWED_REDIRECT_DOMAINS = [
-        'localhost:5000',
-        '127.0.0.1:5000',
-        os.getenv('ALLOWED_DOMAIN', 'localhost:5000')
-    ]
+    logging.basicConfig(
+        level=getattr(logging, log_level),
+        format=log_format
+    )
     
-    # Rate Limiting
-    RATELIMIT_DEFAULTS = ["1000 per hour"]
-    
-    @property
-    def oidc_endpoints(self):
-        """Get OIDC endpoints (discovered or manual)"""
-        if self.OIDC_ISSUER:
-            return discover_oidc_endpoints(self.OIDC_ISSUER)
-        return {}
-    
-    @property
-    def oidc_config(self):
-        """Complete OIDC configuration"""
-        return {
-            'client_id': self.OIDC_CLIENT_ID,
-            'client_secret': self.OIDC_CLIENT_SECRET,
-            'issuer': self.OIDC_ISSUER,
-            'redirect_uri': self.OIDC_REDIRECT_URI,
-            **self.oidc_endpoints
-        }
-    
-    def configure_app(self, app):
-        """Apply configuration to Flask app"""
-        app.secret_key = self.SECRET_KEY
-        app.config['SESSION_COOKIE_SECURE'] = self.SESSION_COOKIE_SECURE
-        app.config['SESSION_COOKIE_HTTPONLY'] = self.SESSION_COOKIE_HTTPONLY
-        app.config['SESSION_COOKIE_SAMESITE'] = self.SESSION_COOKIE_SAMESITE
-        return app
+    # Set specific logger levels
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
