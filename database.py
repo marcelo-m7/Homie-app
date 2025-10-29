@@ -178,12 +178,12 @@ def get_recent_activities(limit=10):
                 'shopping' as type,
                 item_name,
                 u.username,
-                created_at,
+                s.created_at,
                 completed,
                 completed_at
             FROM shopping_items s
             LEFT JOIN users u ON s.added_by = u.id
-            ORDER BY created_at DESC
+            ORDER BY s.created_at DESC
             LIMIT ?
         ''', (limit,)).fetchall()
         
@@ -212,13 +212,13 @@ def get_recent_activities(limit=10):
                 chore_name,
                 u1.username as added_by_username,
                 u2.username as completed_by_username,
-                created_at,
+                c.created_at,
                 completed,
                 completed_at
             FROM chores c
             LEFT JOIN users u1 ON c.added_by = u1.id
             LEFT JOIN users u2 ON c.completed_by = u2.id
-            ORDER BY COALESCE(completed_at, created_at) DESC
+            ORDER BY COALESCE(completed_at, c.created_at) DESC
             LIMIT ?
         ''', (limit,)).fetchall()
         
@@ -245,10 +245,10 @@ def get_recent_activities(limit=10):
                 item_name,
                 expiry_date,
                 u.username,
-                created_at
+                e.created_at
             FROM expiry_items e
             LEFT JOIN users u ON e.added_by = u.id
-            ORDER BY created_at DESC
+            ORDER BY e.created_at DESC
             LIMIT ?
         ''', (limit,)).fetchall()
         
@@ -267,10 +267,10 @@ def get_recent_activities(limit=10):
                 bill_name,
                 amount,
                 u.username,
-                created_at
+                b.created_at
             FROM bills b
             LEFT JOIN users u ON b.added_by = u.id
-            ORDER BY created_at DESC
+            ORDER BY b.created_at DESC
             LIMIT ?
         ''', (limit,)).fetchall()
         
