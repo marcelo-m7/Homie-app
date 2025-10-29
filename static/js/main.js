@@ -274,6 +274,7 @@ function toggleComplete(itemId, type, element) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRF-Token': window.csrfToken
         }
     })
     .then(response => response.json())
@@ -634,6 +635,7 @@ function deleteItem(itemId, type, element) {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRF-Token': window.csrfToken
             }
         })
         .then(response => response.json())

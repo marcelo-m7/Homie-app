@@ -37,14 +37,14 @@ RUN adduser --disabled-password --gecos '' --shell /bin/bash appuser \
 
 # Create entrypoint script to handle permissions
 RUN echo '#!/bin/bash\n\
-# Ensure database file has correct permissions if it exists\n\
-if [ -f /app/homie.db ]; then\n\
-    chown appuser:appuser /app/homie.db\n\
-    chmod 664 /app/homie.db\n\
-fi\n\
 # Ensure data directory has correct permissions\n\
 mkdir -p /app/data\n\
 chown -R appuser:appuser /app/data\n\
+# Ensure database file has correct permissions (restrictive)\n\
+if [ -f /app/data/homie.db ]; then\n\
+    chown appuser:appuser /app/data/homie.db\n\
+    chmod 600 /app/data/homie.db\n\
+fi\n\
 # Switch to non-root user and run the app\n\
 exec su appuser -c "python /app/app.py"' > /entrypoint.sh \
     && chmod +x /entrypoint.sh

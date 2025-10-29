@@ -1,15 +1,9 @@
-"""
-Homie - Family Utility App (Refactored)
-Modular and secure Flask application for family household management
-"""
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
 import sqlite3
 import os
 import secrets
 import requests
 import logging
-import base64
-import json
 from datetime import datetime, date, timedelta
 from functools import wraps
 from dotenv import load_dotenv
@@ -21,76 +15,82 @@ from security import (
     sanitize_html_input, validate_redirect_url, log_security_event
 )
 
-# ===== APP INITIALIZATION =====
-
 app = Flask(__name__)
+
+# Load environment variables
 load_dotenv()
 
 # Security Configuration
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
+# Set secure cookie flag based on environment (only for HTTPS)
 app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
 app.config['SESSION_COOKIE_HTTPONLY'] = True  
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Logging
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Rate Limiting
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["1000 per hour"])
+# Rate limiting configuration
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["1000 per hour"]
+)
 
-# ===== CONFIGURATION FUNCTIONS =====
+# Allowed domains for redirect validation
+ALLOWED_REDIRECT_DOMAINS = [
+    'localhost:5000',
+    '127.0.0.1:5000',
+    os.getenv('ALLOWED_DOMAIN', 'localhost:5000')
+]
 
-def get_oidc_config():
-    """Get OIDC configuration with auto-discovery"""
-    issuer = os.getenv('OIDC_ISSUER')
-    endpoints = {}
-    
-    if issuer:
-        try:
-            well_known_url = f"{issuer}/.well-known/openid-configuration"
-            response = requests.get(well_known_url, timeout=10)
-            response.raise_for_status()
-            config = response.json()
-            endpoints = {
-                'authorization_endpoint': config.get('authorization_endpoint'),
-                'token_endpoint': config.get('token_endpoint'),
-                'userinfo_endpoint': config.get('userinfo_endpoint'),
-                'end_session_endpoint': config.get('end_session_endpoint'),
-            }
-        except Exception as e:
-            logger.warning(f"OIDC discovery failed: {e}")
-            endpoints = {
-                'authorization_endpoint': os.getenv('OIDC_AUTHORIZATION_ENDPOINT'),
-                'token_endpoint': os.getenv('OIDC_TOKEN_ENDPOINT'),
-                'userinfo_endpoint': os.getenv('OIDC_USERINFO_ENDPOINT'),
-                'end_session_endpoint': os.getenv('OIDC_END_SESSION_ENDPOINT'),
-            }
-    
-    return {
-        'client_id': os.getenv('OIDC_CLIENT_ID'),
-        'client_secret': os.getenv('OIDC_CLIENT_SECRET'),
-        'issuer': issuer,
-        'redirect_uri': os.getenv('OIDC_REDIRECT_URI'),
-        **endpoints
-    }
+def discover_oidc_endpoints(issuer):
+    """Auto-discover OIDC endpoints from issuer's well-known configuration"""
+    try:
+        well_known_url = f"{issuer}/.well-known/openid-configuration"
+        response = requests.get(well_known_url, timeout=10)
+        response.raise_for_status()
+        config = response.json()
+        
+        return {
+            'authorization_endpoint': config.get('authorization_endpoint'),
+            'token_endpoint': config.get('token_endpoint'),
+            'userinfo_endpoint': config.get('userinfo_endpoint'),
+            'end_session_endpoint': config.get('end_session_endpoint'),
+        }
+    except Exception as e:
+        print(f"Failed to discover OIDC endpoints: {e}")
+        # Fallback to manual configuration
+        return {
+            'authorization_endpoint': os.getenv('OIDC_AUTHORIZATION_ENDPOINT'),
+            'token_endpoint': os.getenv('OIDC_TOKEN_ENDPOINT'),
+            'userinfo_endpoint': os.getenv('OIDC_USERINFO_ENDPOINT'),
+            'end_session_endpoint': os.getenv('OIDC_END_SESSION_ENDPOINT'),
+        }
 
-def get_access_control():
-    """Get access control configuration"""
-    return {
-        'allowed_emails': [email.strip() for email in os.getenv('ALLOWED_EMAILS', '').split(',') if email.strip()],
-        'allowed_groups': [group.strip() for group in os.getenv('ALLOWED_GROUPS', '').split(',') if group.strip()],
-        'admin_emails': [email.strip() for email in os.getenv('ADMIN_EMAILS', '').split(',') if email.strip()],
-        'allowed_domains': ['localhost:5000', '127.0.0.1:5000', os.getenv('ALLOWED_DOMAIN', 'localhost:5000')]
-    }
+# OIDC Configuration
+issuer = os.getenv('OIDC_ISSUER')
+oidc_endpoints = discover_oidc_endpoints(issuer) if issuer else {}
 
-# Load configurations
-OIDC_CONFIG = get_oidc_config()
-ACCESS_CONTROL = get_access_control()
+OIDC_CONFIG = {
+    'client_id': os.getenv('OIDC_CLIENT_ID'),
+    'client_secret': os.getenv('OIDC_CLIENT_SECRET'),
+    'issuer': issuer,
+    'redirect_uri': os.getenv('OIDC_REDIRECT_URI'),
+    **oidc_endpoints
+}
+
+# Access Control
+ALLOWED_EMAILS = [email.strip() for email in os.getenv('ALLOWED_EMAILS', '').split(',') if email.strip()]
+# Force reload to pick up template changes
+ALLOWED_GROUPS = [group.strip() for group in os.getenv('ALLOWED_GROUPS', '').split(',') if group.strip()]
+ADMIN_EMAILS = [email.strip() for email in os.getenv('ADMIN_EMAILS', '').split(',') if email.strip()]
+
+# Database setup
 DATABASE = '/app/data/homie.db'
 
-# ===== TEMPLATE SETUP =====
-
+# Template context processor for CSRF token
 @app.context_processor
 def inject_csrf_token():
     return dict(csrf_token=generate_csrf_token)
@@ -286,23 +286,19 @@ def is_user_authorized(userinfo):
     email = userinfo.get('email')
     groups = userinfo.get('groups', [])
     
-    # Convert groups to list if it's a string (some OIDC providers)
-    if isinstance(groups, str):
-        groups = [groups]
-    
     # If no restrictions are set, allow all authenticated users
-    if not ACCESS_CONTROL['allowed_emails'] and not ACCESS_CONTROL['allowed_groups']:
+    if not ALLOWED_EMAILS and not ALLOWED_GROUPS:
         return True
     
     # Priority 1: Check group allowlist (preferred method)
-    if ACCESS_CONTROL['allowed_groups']:
-        if groups and any(group in ACCESS_CONTROL['allowed_groups'] for group in groups):
+    if ALLOWED_GROUPS:
+        if groups and any(group in ALLOWED_GROUPS for group in groups):
             return True
         # If groups are configured but user has no matching groups, deny access
         return False
     
     # Priority 2: Fallback to email allowlist (legacy method)
-    if ACCESS_CONTROL['allowed_emails'] and email in ACCESS_CONTROL['allowed_emails']:
+    if ALLOWED_EMAILS and email in ALLOWED_EMAILS:
         return True
     
     return False
@@ -316,7 +312,7 @@ def create_or_update_user(userinfo):
     username = userinfo.get('preferred_username', email.split('@')[0] if email else 'user')
     full_name = userinfo.get('name', '')
     oidc_sub = userinfo.get('sub')
-    is_admin = email in ACCESS_CONTROL['admin_emails'] if email else False
+    is_admin = email in ADMIN_EMAILS if email else False
     
     try:
         # Try to find existing user
@@ -582,7 +578,7 @@ def logout():
     if OIDC_CONFIG['end_session_endpoint']:
         # Validate redirect URL against allowed domains
         redirect_uri = request.url_root.rstrip('/') + url_for('login')
-        if validate_redirect_url(redirect_uri, ACCESS_CONTROL['allowed_domains']):
+        if validate_redirect_url(redirect_uri, ALLOWED_REDIRECT_DOMAINS):
             logout_params = {
                 'post_logout_redirect_uri': redirect_uri
             }

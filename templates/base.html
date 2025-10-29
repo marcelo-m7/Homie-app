@@ -161,6 +161,11 @@
             transition: all 0.2s ease-in-out;
         }
     </style>
+    
+    <!-- CSRF Token for JavaScript -->
+    <script>
+        window.csrfToken = '{{ csrf_token() }}';
+    </script>
 </head>
 <body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300 ios-scroll">
     <div class="min-h-full">
