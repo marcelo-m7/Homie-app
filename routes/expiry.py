@@ -1,7 +1,7 @@
 """
 Expiry tracker routes for Homie Flask application
 """
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
 from authentication import login_required, api_auth_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
@@ -35,10 +35,49 @@ def expiry_tracker():
     conn.close()
     return render_template('expiry_tracker.html', items=items)
 
+@expiry_bp.route('/expiry/add', methods=['POST'])
+@login_required
+def add_expiry():
+    """Add a new expiry item via form submission"""
+    try:
+        item_name = sanitize_input(request.form.get('item_name', '').strip())
+        expiry_date = request.form.get('expiry_date', '').strip()
+        
+        if not item_name or not expiry_date:
+            flash('Item name and expiry date are required', 'error')
+            return redirect(url_for('expiry.expiry_list'))
+        
+        # Validate date format
+        try:
+            from datetime import datetime
+            datetime.strptime(expiry_date, '%Y-%m-%d')
+        except ValueError:
+            flash('Invalid date format. Please use YYYY-MM-DD', 'error')
+            return redirect(url_for('expiry.expiry_list'))
+        
+        user_id = session['user']['id']
+        
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO expiry_tracker (item_name, expiry_date, added_by)
+            VALUES (?, ?, ?)
+        ''', (item_name, expiry_date, user_id))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {user_id} added expiry item: {item_name} expires on {expiry_date}")
+        flash('Expiry item added successfully', 'success')
+        return redirect(url_for('expiry.expiry_list'))
+        
+    except Exception as e:
+        logger.error(f"Error adding expiry item: {e}")
+        flash('Failed to add expiry item', 'error')
+        return redirect(url_for('expiry.expiry_list'))
+
 @expiry_bp.route('/api/expiry/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
-def add_expiry_item():
+def add_expiry_api():
     """Add a new expiry item via API"""
     try:
         data = request.get_json()
@@ -76,6 +115,47 @@ def add_expiry_item():
     except Exception as e:
         logger.error(f"Error adding expiry item: {e}")
         return jsonify({'error': 'Failed to add expiry item'}), 500
+
+@expiry_bp.route('/expiry/delete', methods=['POST'])
+@login_required
+def delete_expiry():
+    """Delete an expiry item via form submission"""
+    try:
+        item_id = request.form.get('item_id')
+        if not item_id:
+            flash('Item ID is required', 'error')
+            return redirect(url_for('expiry.expiry_list'))
+        
+        try:
+            item_id = int(item_id)
+        except (ValueError, TypeError):
+            flash('Invalid item ID', 'error')
+            return redirect(url_for('expiry.expiry_list'))
+        
+        user_id = session['user']['id']
+        
+        conn = get_db_connection()
+        
+        # Check if item exists and user has permission
+        item = conn.execute('SELECT * FROM expiry_tracker WHERE id = ?', (item_id,)).fetchone()
+        if not item:
+            conn.close()
+            flash('Item not found', 'error')
+            return redirect(url_for('expiry.expiry_list'))
+        
+        # Delete the item
+        conn.execute('DELETE FROM expiry_tracker WHERE id = ?', (item_id,))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {user_id} deleted expiry item {item_id}")
+        flash('Expiry item deleted successfully', 'success')
+        return redirect(url_for('expiry.expiry_list'))
+        
+    except Exception as e:
+        logger.error(f"Error deleting expiry item: {e}")
+        flash('Failed to delete expiry item', 'error')
+        return redirect(url_for('expiry.expiry_list'))
 
 @expiry_bp.route('/api/expiry/delete/<int:item_id>', methods=['DELETE'])
 @api_auth_required

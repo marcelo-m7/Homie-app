@@ -59,6 +59,26 @@ def create_app():
             return text
         return ' '.join(word.capitalize() for word in str(text).split())
     
+    @app.template_filter('format_date')
+    def format_date_filter(date_string, format_str='%B %d, %Y'):
+        """Format date string for display"""
+        if not date_string:
+            return ''
+        try:
+            from datetime import datetime
+            # Handle different input formats
+            if isinstance(date_string, str):
+                # Try parsing common formats
+                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f']:
+                    try:
+                        dt = datetime.strptime(date_string, fmt)
+                        return dt.strftime(format_str)
+                    except ValueError:
+                        continue
+            return str(date_string)
+        except Exception:
+            return str(date_string) if date_string else ''
+    
     # ===== ERROR HANDLERS =====
     
     @app.errorhandler(403)

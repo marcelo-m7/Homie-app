@@ -631,25 +631,41 @@ function updateChoreCounters() {
 
 function deleteItem(itemId, type, element) {
     if (confirmAction('Are you sure you want to delete this item?')) {
-        fetch(`/delete_${type}/${itemId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': window.csrfToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                element.closest('.item-row').remove();
-            } else {
-                alert('Error deleting item');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error deleting item');
-        });
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        
+        // Set the correct action URL based on type
+        if (type === 'shopping') {
+            form.action = '/shopping/delete';
+        } else if (type === 'chore') {
+            form.action = '/chores/complete';  // Completing a chore instead of deleting
+        } else if (type === 'expiry') {
+            form.action = '/expiry/delete';
+        } else {
+            form.action = `/delete_${type}`;
+        }
+        
+        // Add the item ID as a hidden field
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        
+        if (type === 'chore') {
+            idInput.name = 'chore_id';
+        } else if (type === 'shopping') {
+            idInput.name = 'item_id';
+        } else if (type === 'expiry') {
+            idInput.name = 'item_id';
+        } else {
+            idInput.name = 'id';
+        }
+        
+        idInput.value = itemId;
+        form.appendChild(idInput);
+        
+        // Add form to document and submit
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 

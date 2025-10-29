@@ -1,7 +1,7 @@
 """
 Shopping list routes for Homie Flask application
 """
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
 from authentication import login_required, api_auth_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
@@ -29,10 +29,39 @@ def shopping_list():
     conn.close()
     return render_template('shopping_list.html', items=items)
 
+@shopping_bp.route('/shopping/add', methods=['POST'])
+@login_required
+def add_shopping_item():
+    """Add a new shopping item via form submission"""
+    try:
+        item_name = sanitize_input(request.form.get('item_name', '').strip())
+        if not item_name:
+            flash('Item name is required', 'error')
+            return redirect(url_for('shopping.shopping_list'))
+        
+        user_id = session['user']['id']
+        
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO shopping_items (item_name, added_by)
+            VALUES (?, ?)
+        ''', (item_name, user_id))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {user_id} added shopping item: {item_name}")
+        flash('Item added successfully', 'success')
+        return redirect(url_for('shopping.shopping_list'))
+        
+    except Exception as e:
+        logger.error(f"Error adding shopping item: {e}")
+        flash('Failed to add item', 'error')
+        return redirect(url_for('shopping.shopping_list'))
+
 @shopping_bp.route('/api/shopping/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
-def add_shopping_item():
+def add_shopping_item_api():
     """Add a new shopping item via API"""
     try:
         data = request.get_json()

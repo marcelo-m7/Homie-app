@@ -1,7 +1,7 @@
 """
 Bills routes for Homie Flask application
 """
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
 from authentication import login_required, api_auth_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
@@ -29,10 +29,58 @@ def bills_list():
     conn.close()
     return render_template('bills.html', bills=bills)
 
+@bills_bp.route('/bills/add', methods=['POST'])
+@login_required
+def add_bill():
+    """Add a new bill via form submission"""
+    try:
+        # Get form data
+        bill_name = sanitize_input(request.form.get('bill_name', '').strip())
+        if not bill_name:
+            flash('Bill name is required', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        try:
+            amount = float(request.form.get('amount', '0'))
+            if amount < 0:
+                flash('Amount cannot be negative', 'error')
+                return redirect(url_for('bills.bills_list'))
+        except (ValueError, TypeError):
+            flash('Invalid amount format', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        try:
+            due_day = int(request.form.get('due_day', '1'))
+            if due_day < 1 or due_day > 31:
+                flash('Due day must be between 1 and 31', 'error')
+                return redirect(url_for('bills.bills_list'))
+        except (ValueError, TypeError):
+            flash('Invalid due day format', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        user_id = session['user']['id']
+        
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO bills (bill_name, amount, due_day, added_by)
+            VALUES (?, ?, ?, ?)
+        ''', (bill_name, amount, due_day, user_id))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {user_id} added bill: {bill_name} - ${amount}")
+        flash('Bill added successfully', 'success')
+        return redirect(url_for('bills.bills_list'))
+        
+    except Exception as e:
+        logger.error(f"Error adding bill: {e}")
+        flash('Failed to add bill', 'error')
+        return redirect(url_for('bills.bills_list'))
+
 @bills_bp.route('/api/bills/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
-def add_bill():
+def add_bill_api():
     """Add a new bill via API"""
     try:
         data = request.get_json()

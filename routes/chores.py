@@ -1,7 +1,7 @@
 """
 Chores routes for Homie Flask application
 """
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
 from authentication import login_required, api_auth_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
@@ -36,10 +36,58 @@ def chores_list():
     conn.close()
     return render_template('chores.html', chores=chores, users=users)
 
+@chores_bp.route('/chores/add', methods=['POST'])
+@login_required
+def add_chore():
+    """Add a new chore via form submission"""
+    try:
+        chore_name = sanitize_input(request.form.get('chore_name', '').strip())
+        if not chore_name:
+            flash('Chore name is required', 'error')
+            return redirect(url_for('chores.chores_list'))
+        
+        assigned_to = request.form.get('assigned_to')
+        if assigned_to == '':
+            assigned_to = None
+        elif assigned_to is not None:
+            try:
+                assigned_to = int(assigned_to)
+            except (ValueError, TypeError):
+                flash('Invalid assigned user', 'error')
+                return redirect(url_for('chores.chores_list'))
+        
+        user_id = session['user']['id']
+        
+        conn = get_db_connection()
+        
+        # Validate assigned user exists if specified
+        if assigned_to is not None:
+            user_exists = conn.execute('SELECT id FROM users WHERE id = ?', (assigned_to,)).fetchone()
+            if not user_exists:
+                conn.close()
+                flash('Assigned user does not exist', 'error')
+                return redirect(url_for('chores.chores_list'))
+        
+        conn.execute('''
+            INSERT INTO chores (chore_name, assigned_to, added_by)
+            VALUES (?, ?, ?)
+        ''', (chore_name, assigned_to, user_id))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {user_id} added chore: {chore_name}")
+        flash('Chore added successfully', 'success')
+        return redirect(url_for('chores.chores_list'))
+        
+    except Exception as e:
+        logger.error(f"Error adding chore: {e}")
+        flash('Failed to add chore', 'error')
+        return redirect(url_for('chores.chores_list'))
+
 @chores_bp.route('/api/chores/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
-def add_chore():
+def add_chore_api():
     """Add a new chore via API"""
     try:
         data = request.get_json()
@@ -83,6 +131,50 @@ def add_chore():
     except Exception as e:
         logger.error(f"Error adding chore: {e}")
         return jsonify({'error': 'Failed to add chore'}), 500
+
+@chores_bp.route('/chores/complete', methods=['POST'])
+@login_required
+def complete_chore():
+    """Complete a chore via form submission"""
+    try:
+        chore_id = request.form.get('chore_id')
+        if not chore_id:
+            flash('Chore ID is required', 'error')
+            return redirect(url_for('chores.chores_list'))
+        
+        try:
+            chore_id = int(chore_id)
+        except (ValueError, TypeError):
+            flash('Invalid chore ID', 'error')
+            return redirect(url_for('chores.chores_list'))
+        
+        user_id = session['user']['id']
+        
+        conn = get_db_connection()
+        
+        # Check if chore exists and user has permission
+        chore = conn.execute('SELECT * FROM chores WHERE id = ?', (chore_id,)).fetchone()
+        if not chore:
+            conn.close()
+            flash('Chore not found', 'error')
+            return redirect(url_for('chores.chores_list'))
+        
+        # Update chore as completed
+        conn.execute('''
+            UPDATE chores SET completed = 1, completed_by = ?, completed_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (user_id, chore_id))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {user_id} completed chore {chore_id}")
+        flash('Chore marked as completed', 'success')
+        return redirect(url_for('chores.chores_list'))
+        
+    except Exception as e:
+        logger.error(f"Error completing chore: {e}")
+        flash('Failed to complete chore', 'error')
+        return redirect(url_for('chores.chores_list'))
 
 @chores_bp.route('/api/chores/toggle/<int:chore_id>', methods=['POST'])
 @api_auth_required
