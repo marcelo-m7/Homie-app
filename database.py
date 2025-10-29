@@ -8,8 +8,16 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# Database setup
-DATABASE = '/app/data/homie.db'
+# Database setup - works for both Docker and local development
+# Use environment variable or auto-detect based on platform/container
+if 'DATABASE_PATH' in os.environ:
+    DATABASE = os.getenv('DATABASE_PATH')
+elif os.name == 'nt':  # Windows
+    DATABASE = './data/homie.db'
+elif os.path.exists('/app'):  # Docker container
+    DATABASE = '/app/data/homie.db'
+else:  # Linux/Mac local development
+    DATABASE = './data/homie.db'
 
 def get_db_connection():
     """Get database connection with row factory"""
@@ -20,7 +28,12 @@ def get_db_connection():
 def init_db():
     """Initialize the database with required tables"""
     # Ensure the data directory exists
-    os.makedirs('/app/data', exist_ok=True)
+    db_dir = os.path.dirname(DATABASE)
+    if db_dir and not os.path.exists(db_dir):
+        os.makedirs(db_dir, exist_ok=True)
+        logger.info(f"Created database directory: {db_dir}")
+    
+    logger.info(f"Using database: {DATABASE}")
     conn = get_db_connection()
     
     # Users table (simplified for OIDC-only)
@@ -142,7 +155,7 @@ def get_dashboard_stats():
     
     # Get monthly bills total
     bills_total = conn.execute('SELECT SUM(amount) as total FROM bills').fetchone()['total'] or 0
-    
+
     conn.close()
     
     return {

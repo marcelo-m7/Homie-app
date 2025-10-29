@@ -2,6 +2,12 @@
 Homie - Family Utility App (Refactored)
 Main application module using modular architecture
 """
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -241,11 +247,11 @@ def create_app():
         """Main dashboard page"""
         try:
             stats = get_dashboard_stats()
-            return render_template('dashboard.html', stats=stats)
+            return render_template('dashboard.html', **stats)
         except Exception as e:
             logger.error(f"Dashboard error: {e}")
             flash('Error loading dashboard', 'error')
-            return render_template('dashboard.html', stats={})
+            return render_template('dashboard.html', shopping_count=0, chores_count=0, expiring_count=0, bills_total=0)
     
     @app.route('/unauthorized')
     def unauthorized():

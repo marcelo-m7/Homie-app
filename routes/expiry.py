@@ -26,7 +26,8 @@ def expiry_list():
                    WHEN e.expiry_date <= date('now', '+7 days') THEN 'warning'
                    WHEN e.expiry_date <= date('now', '+30 days') THEN 'upcoming'
                    ELSE 'future'
-               END as status
+               END as status,
+               CAST(julianday(e.expiry_date) - julianday('now') AS INTEGER) as days_remaining
         FROM expiry_items e
         LEFT JOIN users u ON e.added_by = u.id
         ORDER BY e.expiry_date ASC

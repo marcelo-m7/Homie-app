@@ -26,8 +26,11 @@ def bills_list():
         ORDER BY b.due_day ASC, b.created_at DESC
     ''').fetchall()
     
+    # Calculate monthly total
+    monthly_total = conn.execute('SELECT SUM(amount) as total FROM bills').fetchone()['total'] or 0
+    
     conn.close()
-    return render_template('bills.html', bills=bills)
+    return render_template('bills.html', bills=bills, monthly_total=monthly_total)
 
 @bills_bp.route('/bills/add', methods=['POST'])
 @login_required

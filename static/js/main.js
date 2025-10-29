@@ -643,7 +643,7 @@ function deleteItem(itemId, type, element) {
         if (type === 'shopping') {
             form.action = '/shopping/delete';
         } else if (type === 'chore') {
-            form.action = '/chores/complete';  // Completing a chore instead of deleting
+            form.action = '/chores/delete';
         } else if (type === 'expiry') {
             form.action = '/expiry/delete';
         } else {

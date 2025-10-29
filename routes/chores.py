@@ -18,7 +18,7 @@ def chores_list():
     conn = get_db_connection()
     
     # Get all chores with user information
-    chores = conn.execute('''
+    all_chores = conn.execute('''
         SELECT c.*, 
                au.username as added_by_name,
                asu.username as assigned_to_name,
@@ -30,11 +30,18 @@ def chores_list():
         ORDER BY c.completed ASC, c.created_at DESC
     ''').fetchall()
     
+    # Split chores into pending and completed
+    pending_chores = [chore for chore in all_chores if not chore['completed']]
+    completed_chores = [chore for chore in all_chores if chore['completed']]
+    
     # Get all users for assignment dropdown
     users = conn.execute('SELECT id, username FROM users ORDER BY username').fetchall()
     
     conn.close()
-    return render_template('chores.html', chores=chores, users=users)
+    return render_template('chores.html', 
+                         pending_chores=pending_chores, 
+                         completed_chores=completed_chores, 
+                         users=users)
 
 @chores_bp.route('/chores/add', methods=['POST'])
 @login_required
@@ -176,6 +183,47 @@ def complete_chore():
         flash('Failed to complete chore', 'error')
         return redirect(url_for('chores.chores_list'))
 
+@chores_bp.route('/chores/delete', methods=['POST'])
+@login_required
+def delete_chore():
+    """Delete a chore via form submission"""
+    try:
+        chore_id = request.form.get('chore_id')
+        if not chore_id:
+            flash('Chore ID is required', 'error')
+            return redirect(url_for('chores.chores_list'))
+        
+        try:
+            chore_id = int(chore_id)
+        except (ValueError, TypeError):
+            flash('Invalid chore ID', 'error')
+            return redirect(url_for('chores.chores_list'))
+        
+        user_id = session['user']['id']
+        
+        conn = get_db_connection()
+        
+        # Check if chore exists
+        chore = conn.execute('SELECT * FROM chores WHERE id = ?', (chore_id,)).fetchone()
+        if not chore:
+            conn.close()
+            flash('Chore not found', 'error')
+            return redirect(url_for('chores.chores_list'))
+        
+        # Delete the chore
+        conn.execute('DELETE FROM chores WHERE id = ?', (chore_id,))
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {user_id} deleted chore {chore_id}")
+        flash('Chore deleted successfully', 'success')
+        return redirect(url_for('chores.chores_list'))
+        
+    except Exception as e:
+        logger.error(f"Error deleting chore: {e}")
+        flash('Failed to delete chore', 'error')
+        return redirect(url_for('chores.chores_list'))
+
 @chores_bp.route('/api/chores/toggle/<int:chore_id>', methods=['POST'])
 @api_auth_required
 @csrf_protect  
@@ -224,7 +272,7 @@ def toggle_chore(chore_id):
 @chores_bp.route('/api/chores/delete/<int:chore_id>', methods=['DELETE'])
 @api_auth_required
 @csrf_protect
-def delete_chore(chore_id):
+def api_delete_chore(chore_id):
     """Delete a chore"""
     try:
         conn = get_db_connection()

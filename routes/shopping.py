@@ -39,7 +39,14 @@ def add_shopping_item():
             flash('Item name is required', 'error')
             return redirect(url_for('shopping.shopping_list'))
         
+        # Debug logging
+        logger.info(f"Session data: {session}")
+        if 'user' not in session:
+            flash('User session not found. Please log in again.', 'error')
+            return redirect(url_for('shopping.shopping_list'))
+            
         user_id = session['user']['id']
+        logger.info(f"Adding shopping item '{item_name}' for user {user_id}")
         
         conn = get_db_connection()
         conn.execute('''
