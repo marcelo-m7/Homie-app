@@ -14,7 +14,7 @@ from flask_limiter.util import get_remote_address
 
 # Import our custom modules
 from config import get_app_config, get_oidc_configuration, load_access_control, setup_logging
-from database import init_db, get_dashboard_stats
+from database import init_db, get_dashboard_stats, get_recent_activities
 from authentication import (
     login_required, admin_required, generate_state, generate_nonce,
     build_authorization_url, exchange_code_for_token, get_userinfo,
@@ -247,11 +247,12 @@ def create_app():
         """Main dashboard page"""
         try:
             stats = get_dashboard_stats()
-            return render_template('dashboard.html', **stats)
+            recent_activities = get_recent_activities(limit=5)
+            return render_template('dashboard.html', recent_activities=recent_activities, **stats)
         except Exception as e:
             logger.error(f"Dashboard error: {e}")
             flash('Error loading dashboard', 'error')
-            return render_template('dashboard.html', shopping_count=0, chores_count=0, expiring_count=0, bills_total=0)
+            return render_template('dashboard.html', shopping_count=0, chores_count=0, expiring_count=0, monthly_total=0, recent_activities=[])
     
     @app.route('/unauthorized')
     def unauthorized():

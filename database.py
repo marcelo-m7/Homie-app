@@ -165,6 +165,165 @@ def get_dashboard_stats():
         'monthly_total': bills_total
     }
 
+def get_recent_activities(limit=10):
+    """Get recent activities across all modules for dashboard display"""
+    conn = get_db_connection()
+    activities = []
+    
+    try:
+        logger.info(f"Getting recent activities with limit: {limit}")
+        # Get recent shopping items added
+        shopping_items = conn.execute('''
+            SELECT 
+                'shopping' as type,
+                item_name,
+                u.username,
+                created_at,
+                completed,
+                completed_at
+            FROM shopping_items s
+            LEFT JOIN users u ON s.added_by = u.id
+            ORDER BY created_at DESC
+            LIMIT ?
+        ''', (limit,)).fetchall()
+        
+        logger.info(f"Found {len(shopping_items)} shopping items")
+        
+        for item in shopping_items:
+            if item['completed'] and item['completed_at']:
+                activities.append({
+                    'description': f"{item['username']} completed shopping item: {item['item_name']}",
+                    'time': item['completed_at'],
+                    'icon': 'fa-check-circle',
+                    'type': 'shopping_completed'
+                })
+            else:
+                activities.append({
+                    'description': f"{item['username']} added shopping item: {item['item_name']}",
+                    'time': item['created_at'],
+                    'icon': 'fa-shopping-cart',
+                    'type': 'shopping_added'
+                })
+        
+        # Get recent chores
+        chores = conn.execute('''
+            SELECT 
+                'chore' as type,
+                chore_name,
+                u1.username as added_by_username,
+                u2.username as completed_by_username,
+                created_at,
+                completed,
+                completed_at
+            FROM chores c
+            LEFT JOIN users u1 ON c.added_by = u1.id
+            LEFT JOIN users u2 ON c.completed_by = u2.id
+            ORDER BY COALESCE(completed_at, created_at) DESC
+            LIMIT ?
+        ''', (limit,)).fetchall()
+        
+        for chore in chores:
+            if chore['completed'] and chore['completed_at']:
+                activities.append({
+                    'description': f"{chore['completed_by_username']} completed chore: {chore['chore_name']}",
+                    'time': chore['completed_at'],
+                    'icon': 'fa-check-circle',
+                    'type': 'chore_completed'
+                })
+            else:
+                activities.append({
+                    'description': f"{chore['added_by_username']} added chore: {chore['chore_name']}",
+                    'time': chore['created_at'],
+                    'icon': 'fa-tasks',
+                    'type': 'chore_added'
+                })
+        
+        # Get recent expiry items
+        expiry_items = conn.execute('''
+            SELECT 
+                'expiry' as type,
+                item_name,
+                expiry_date,
+                u.username,
+                created_at
+            FROM expiry_items e
+            LEFT JOIN users u ON e.added_by = u.id
+            ORDER BY created_at DESC
+            LIMIT ?
+        ''', (limit,)).fetchall()
+        
+        for item in expiry_items:
+            activities.append({
+                'description': f"{item['username']} added expiry tracker: {item['item_name']} (expires {item['expiry_date']})",
+                'time': item['created_at'],
+                'icon': 'fa-calendar-times',
+                'type': 'expiry_added'
+            })
+        
+        # Get recent bills
+        bills = conn.execute('''
+            SELECT 
+                'bill' as type,
+                bill_name,
+                amount,
+                u.username,
+                created_at
+            FROM bills b
+            LEFT JOIN users u ON b.added_by = u.id
+            ORDER BY created_at DESC
+            LIMIT ?
+        ''', (limit,)).fetchall()
+        
+        for bill in bills:
+            activities.append({
+                'description': f"{bill['username']} added bill: {bill['bill_name']} (£{bill['amount']})",
+                'time': bill['created_at'],
+                'icon': 'fa-receipt',
+                'type': 'bill_added'
+            })
+        
+        # Sort all activities by time (most recent first) and limit
+        activities.sort(key=lambda x: x['time'], reverse=True)
+        activities = activities[:limit]
+        
+        logger.info(f"Total activities found: {len(activities)}")
+        
+        # Format timestamps for display
+        from datetime import datetime
+        for activity in activities:
+            try:
+                # Parse the timestamp
+                dt = datetime.fromisoformat(activity['time'].replace('Z', '+00:00'))
+                # Format for display (e.g., "2 hours ago", "Yesterday", etc.)
+                now = datetime.now()
+                diff = now - dt.replace(tzinfo=None)
+                
+                if diff.days > 0:
+                    if diff.days == 1:
+                        activity['time'] = "Yesterday"
+                    else:
+                        activity['time'] = f"{diff.days} days ago"
+                elif diff.seconds > 3600:
+                    hours = diff.seconds // 3600
+                    activity['time'] = f"{hours} hour{'s' if hours > 1 else ''} ago"
+                elif diff.seconds > 60:
+                    minutes = diff.seconds // 60
+                    activity['time'] = f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+                else:
+                    activity['time'] = "Just now"
+            except Exception as e:
+                # Fallback to original timestamp if parsing fails
+                logger.warning(f"Error parsing timestamp: {e}")
+                activity['time'] = activity['time']
+    
+    except Exception as e:
+        logger.error(f"Error getting recent activities: {e}")
+    
+    finally:
+        conn.close()
+    
+    return activities
+
 def create_or_update_user(userinfo, access_control):
     """Create or update user from OIDC userinfo"""
     conn = get_db_connection()
