@@ -140,3 +140,9 @@ If auto-discovery fails, you can set these manually:
 - Verify your `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are correct
 - Check that your OIDC provider allows the redirect URI: `http://localhost:5000/auth/callback`
 - Ensure your email is in the `ALLOWED_EMAILS` list
+
+## Known Issues
+
+- Automatic fetching of OIDC configuration has some issues and will need to be re-worked
+- The `BASE_URL` must be set to the URL of your Homie instance for OIDC to function.
+- All `OIDC Fallback` environments must be set.
