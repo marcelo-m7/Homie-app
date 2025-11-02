@@ -18,7 +18,9 @@ services:
       - DATABASE_PATH=/app/data/homie.db
       
       # ===== OIDC Authentication Configuration =====
-      # Replace with your OIDC provider details
+      # Enable OIDC authentication (set to false to disable OIDC and prepare for local accounts)
+      - OIDC_ENABLED=true
+      # Replace with your OIDC provider details (required when OIDC is enabled)
       - OIDC_BASE_URL=https://your-oidc-provider.com
       - OIDC_CLIENT_ID=your-client-id
       - OIDC_CLIENT_SECRET=your-client-secret

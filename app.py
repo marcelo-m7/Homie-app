@@ -105,13 +105,19 @@ def create_app():
     
     @app.route('/login')
     def login():
-        """Initiate OIDC authentication"""
+        """Initiate authentication (OIDC or local)"""
         if 'user' in session:
             return redirect(url_for('dashboard'))
         
+        # Check if OIDC is enabled
+        if not app_config['OIDC_ENABLED']:
+            flash('Local authentication is not yet implemented', 'error')
+            return render_template('login.html', oidc_enabled=False)
+        
+        # OIDC Authentication
         if not oidc_config:
             flash('Authentication service is not configured', 'error')
-            return render_template('login.html')
+            return render_template('login.html', oidc_enabled=True)
         
         # Generate state and nonce for security
         state = generate_state()
@@ -130,12 +136,17 @@ def create_app():
         except Exception as e:
             logger.error(f"Failed to build authorization URL: {e}")
             flash('Authentication failed', 'error')
-            return render_template('login.html')
+            return render_template('login.html', oidc_enabled=True)
     
     @app.route('/auth/callback')
     @limiter.limit("10 per minute")
     def auth_callback():
         """Handle OIDC callback"""
+        # Check if OIDC is enabled
+        if not app_config['OIDC_ENABLED']:
+            flash('OIDC authentication is disabled', 'error')
+            return redirect(url_for('login'))
+        
         # Validate state parameter
         state = request.args.get('state')
         session_state = session.get('oidc_state')
@@ -218,19 +229,28 @@ def create_app():
     @csrf_protect
     def logout():
         """Handle user logout"""
-        # Build OIDC logout URL if available
-        logout_url = build_logout_url(oidc_config, app_config['BASE_URL'])
-        
         # Clear session
         clear_session()
         
         flash('You have been logged out', 'info')
         
-        # Redirect to OIDC logout or login page
-        if logout_url:
-            return redirect(logout_url)
-        else:
-            return redirect(url_for('login'))
+        # Build OIDC logout URL if OIDC is enabled and available
+        if app_config['OIDC_ENABLED'] and oidc_config:
+            logout_url = build_logout_url(oidc_config, app_config['BASE_URL'])
+            if logout_url:
+                return redirect(logout_url)
+        
+        # Redirect to login page
+        return redirect(url_for('login'))
+    
+    @app.route('/local_login')
+    def local_login():
+        """Local authentication login page (placeholder for future implementation)"""
+        if 'user' in session:
+            return redirect(url_for('dashboard'))
+        
+        flash('Local authentication is not yet implemented. Please enable OIDC authentication.', 'warning')
+        return render_template('login.html', oidc_enabled=False, local_mode=True)
     
     # ===== MAIN ROUTES =====
     

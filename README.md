@@ -26,6 +26,7 @@ A simple family utility app for managing household tasks with secure authenticat
 3. **Edit the compose.yml file:**
    ```yaml
    - SECRET_KEY=your-random-secret-key-here
+   - OIDC_ENABLED=true
    - OIDC_BASE_URL=https://your-auth-provider.com
    - OIDC_CLIENT_ID=your-client-id
    - OIDC_CLIENT_SECRET=your-client-secret
@@ -45,11 +46,21 @@ Copy `.env.sample` to `.env` and fill in your values, or edit the environment va
 
 **Required settings:**
 - `SECRET_KEY` - Random string for security
-- `OIDC_BASE_URL` - Your authentication provider URL  
-- `OIDC_CLIENT_ID` & `OIDC_CLIENT_SECRET` - From your OIDC provider
-- `ALLOWED_EMAILS` - Who can access the app
+- `OIDC_ENABLED` - Enable/disable OIDC authentication (default: true)
+- `OIDC_BASE_URL` - Your authentication provider URL (when OIDC enabled)
+- `OIDC_CLIENT_ID` & `OIDC_CLIENT_SECRET` - From your OIDC provider (when OIDC enabled)
+- `ALLOWED_EMAILS` - Who can access the app (when OIDC enabled)
 
 **Important:** Configure `{your-base-url}/auth/callback` as the callback URL in your OIDC provider.
+
+## Authentication Modes
+
+Homie supports two authentication modes:
+
+- **OIDC Mode** (default): Use external OIDC provider (Keycloak, Auth0, etc.)
+- **Local Mode** (coming soon): Local user accounts with username/password
+
+To disable OIDC and prepare for local accounts, set `OIDC_ENABLED=false` in your environment.
 
 ## Development
 

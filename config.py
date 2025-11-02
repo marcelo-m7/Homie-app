@@ -9,11 +9,20 @@ from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
+def is_oidc_enabled():
+    """Check if OIDC authentication is enabled"""
+    return os.getenv('OIDC_ENABLED', 'true').lower() == 'true'
+
 def get_oidc_configuration():
     """Get OIDC configuration with auto-discovery"""
+    # Check if OIDC is enabled
+    if not is_oidc_enabled():
+        logger.info("OIDC authentication is disabled")
+        return None
+        
     oidc_base_url = os.getenv('OIDC_BASE_URL')
     if not oidc_base_url:
-        logger.error("OIDC_BASE_URL environment variable is required")
+        logger.error("OIDC_BASE_URL environment variable is required when OIDC is enabled")
         return None
     
     # Build complete OIDC config with client credentials
@@ -139,6 +148,7 @@ def get_app_config():
     """Get Flask application configuration"""
     return {
         'SECRET_KEY': os.getenv('SECRET_KEY', 'dev-key-change-in-production'),
+        'OIDC_ENABLED': is_oidc_enabled(),
         'OIDC_CLIENT_ID': os.getenv('OIDC_CLIENT_ID', ''),
         'OIDC_CLIENT_SECRET': os.getenv('OIDC_CLIENT_SECRET', ''),
         'OIDC_BASE_URL': os.getenv('OIDC_BASE_URL', ''),
