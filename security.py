@@ -36,7 +36,17 @@ def csrf_protect(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
+            # Try to get token from header first (for AJAX requests)
             token = request.headers.get('X-CSRF-Token')
+            
+            # If not in header, try form data (for regular form submissions)
+            if not token:
+                token = request.form.get('csrf_token')
+            
+            # If still no token, try JSON data
+            if not token and request.is_json:
+                token = request.get_json().get('csrf_token') if request.get_json() else None
+            
             if not validate_csrf_token(token):
                 logger.warning(f"CSRF token validation failed for {request.endpoint}")
                 abort(403, description="CSRF token validation failed")

@@ -20,7 +20,7 @@ def expiry_list():
     
     # Get all expiry items with user information
     items = conn.execute('''
-        SELECT e.*, u.username as added_by_name,
+        SELECT e.*, u.username as added_by_username,
                CASE 
                    WHEN e.expiry_date < date('now') THEN 'expired'
                    WHEN e.expiry_date <= date('now', '+7 days') THEN 'warning'

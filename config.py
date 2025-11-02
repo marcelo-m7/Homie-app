@@ -9,11 +9,20 @@ from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
+def is_oidc_enabled():
+    """Check if OIDC authentication is enabled"""
+    return os.getenv('OIDC_ENABLED', 'true').lower() == 'true'
+
 def get_oidc_configuration():
     """Get OIDC configuration with auto-discovery"""
+    # Check if OIDC is enabled
+    if not is_oidc_enabled():
+        logger.info("OIDC authentication is disabled")
+        return None
+        
     oidc_base_url = os.getenv('OIDC_BASE_URL')
     if not oidc_base_url:
-        logger.error("OIDC_BASE_URL environment variable is required")
+        logger.error("OIDC_BASE_URL environment variable is required when OIDC is enabled")
         return None
     
     # Build complete OIDC config with client credentials
@@ -135,10 +144,57 @@ def load_access_control():
     
     return config
 
+def load_local_users():
+    """Load local users configuration for non-OIDC authentication"""
+    users = []
+    users_str = os.getenv('USERS', '')
+    
+    if users_str:
+        user_entries = [entry.strip() for entry in users_str.split(',')]
+        
+        for entry in user_entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+                
+            if ':' in entry:
+                # Full format: "username:email:Full Name" or "username:email"
+                parts = entry.split(':', 2)
+                if len(parts) >= 2:
+                    username = parts[0].strip()
+                    email = parts[1].strip()
+                    full_name = parts[2].strip() if len(parts) > 2 else username.title()
+                    
+                    if username and email:
+                        users.append({
+                            'username': username.lower(),
+                            'email': email,
+                            'full_name': full_name
+                        })
+                    else:
+                        logger.warning(f"Invalid user entry (missing username or email): {entry}")
+                else:
+                    logger.warning(f"Invalid user entry format: {entry}")
+            else:
+                # Simple format: just the name
+                name = entry.strip()
+                if name:
+                    username = name.lower()
+                    email = f"{username}@local.homie"  # Generate a local email
+                    users.append({
+                        'username': username,
+                        'email': email,
+                        'full_name': name
+                    })
+    
+    logger.info(f"Loaded {len(users)} local users")
+    return users
+
 def get_app_config():
     """Get Flask application configuration"""
     return {
         'SECRET_KEY': os.getenv('SECRET_KEY', 'dev-key-change-in-production'),
+        'OIDC_ENABLED': is_oidc_enabled(),
         'OIDC_CLIENT_ID': os.getenv('OIDC_CLIENT_ID', ''),
         'OIDC_CLIENT_SECRET': os.getenv('OIDC_CLIENT_SECRET', ''),
         'OIDC_BASE_URL': os.getenv('OIDC_BASE_URL', ''),

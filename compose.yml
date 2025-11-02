@@ -18,14 +18,20 @@ services:
       - DATABASE_PATH=/app/data/homie.db
       
       # ===== OIDC Authentication Configuration =====
-      # Replace with your OIDC provider details
+      # Enable OIDC authentication (set to false to disable OIDC and prepare for local accounts)
+      - OIDC_ENABLED=true
+      # Replace with your OIDC provider details (required when OIDC is enabled)
       - OIDC_BASE_URL=https://your-oidc-provider.com
       - OIDC_CLIENT_ID=your-client-id
       - OIDC_CLIENT_SECRET=your-client-secret
       
       # ===== Access Control Configuration =====
-      # Allowed email addresses (comma-separated list of who can access the app)
+      # Allowed email addresses (comma-separated list of who can access the app - used with OIDC)
       - ALLOWED_EMAILS=user1@example.com,user2@example.com,admin@example.com
+      
+      # ===== Local Users Configuration (when OIDC is disabled) =====
+      # Local users list (simple names or full format username:email:Full Name)
+      # - USERS=Emma,Cam,Alex
       
       # ===== Security Configuration =====
       # Enable secure cookies (set to true in production with HTTPS)

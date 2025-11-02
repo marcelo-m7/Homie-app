@@ -371,3 +371,62 @@ def create_or_update_user(userinfo, access_control):
         conn.close()
         logger.error(f"Error creating/updating user: {e}")
         raise
+
+def create_or_update_local_user(user_info):
+    """Create or update a local user (non-OIDC)"""
+    conn = get_db_connection()
+    
+    # Extract user information
+    username = user_info['username']
+    email = user_info['email']
+    full_name = user_info['full_name']
+    # Generate a pseudo oidc_sub for local users to maintain database compatibility
+    oidc_sub = f"local_{username}"
+    is_admin = False  # Simplified: no admin distinction for local users
+    
+    try:
+        # Try to find existing user by username or email
+        user = conn.execute('''
+            SELECT * FROM users WHERE username = ? OR email = ? OR oidc_sub = ?
+        ''', (username, email, oidc_sub)).fetchone()
+        
+        if user:
+            # Update existing user
+            conn.execute('''
+                UPDATE users SET 
+                    username = ?, email = ?, full_name = ?, 
+                    is_admin = ?, last_login = ?, last_activity = ?
+                WHERE id = ?
+            ''', (username, email, full_name, is_admin, 
+                  datetime.now().isoformat(), datetime.now().isoformat(), user['id']))
+            logger.info(f"Updated local user: {username}")
+        else:
+            # Create new user
+            conn.execute('''
+                INSERT INTO users (username, email, full_name, is_admin, oidc_sub, last_login, created_at, last_activity)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (username, email, full_name, is_admin, oidc_sub, 
+                  datetime.now().isoformat(), datetime.now().isoformat(), datetime.now().isoformat()))
+            logger.info(f"Created local user: {username}")
+        
+        conn.commit()
+        
+        # Return the user record
+        user = conn.execute('''
+            SELECT * FROM users WHERE oidc_sub = ?
+        ''', (oidc_sub,)).fetchone()
+        
+        if not user:
+            logger.error(f"User not found after creation/update with oidc_sub: {oidc_sub}")
+            # Try alternative query as fallback
+            user = conn.execute('''
+                SELECT * FROM users WHERE username = ? AND email = ?
+            ''', (username, email)).fetchone()
+        
+        conn.close()
+        return user
+        
+    except Exception as e:
+        conn.close()
+        logger.error(f"Error creating/updating local user: {e}")
+        raise

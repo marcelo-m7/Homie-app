@@ -19,7 +19,7 @@ def shopping_list():
     
     # Get all shopping items with user information
     items = conn.execute('''
-        SELECT si.*, u.username as added_by_name, cu.username as completed_by_name
+        SELECT si.*, u.username as added_by_username, cu.username as completed_by_username
         FROM shopping_items si
         LEFT JOIN users u ON si.added_by = u.id
         LEFT JOIN users cu ON si.completed_by = cu.id
@@ -39,14 +39,11 @@ def add_shopping_item():
             flash('Item name is required', 'error')
             return redirect(url_for('shopping.shopping_list'))
         
-        # Debug logging
-        logger.info(f"Session data: {session}")
         if 'user' not in session:
             flash('User session not found. Please log in again.', 'error')
             return redirect(url_for('shopping.shopping_list'))
             
         user_id = session['user']['id']
-        logger.info(f"Adding shopping item '{item_name}' for user {user_id}")
         
         conn = get_db_connection()
         conn.execute('''
@@ -79,7 +76,7 @@ def add_shopping_item_api():
         if not item_name:
             return jsonify({'error': 'Item name cannot be empty'}), 400
         
-        user_id = request.session['user']['id']
+        user_id = session['user']['id']
         
         conn = get_db_connection()
         conn.execute('''
@@ -110,7 +107,7 @@ def toggle_shopping_item(item_id):
             conn.close()
             return jsonify({'error': 'Item not found'}), 404
         
-        user_id = request.session['user']['id']
+        user_id = session['user']['id']
         
         # Toggle the completion status
         new_status = not item['completed']
@@ -211,8 +208,22 @@ def toggle_shopping_item_form():
             return redirect(url_for('shopping.shopping_list'))
         
         # Toggle completion status
-        new_status = 0 if item['completed'] else 1
-        conn.execute('UPDATE shopping_items SET completed = ? WHERE id = ?', (new_status, item_id))
+        new_status = not item['completed']
+        completed_by = user_id if new_status else None
+        
+        if new_status:
+            conn.execute('''
+                UPDATE shopping_items 
+                SET completed = ?, completed_by = ?, completed_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (new_status, completed_by, item_id))
+        else:
+            conn.execute('''
+                UPDATE shopping_items 
+                SET completed = ?, completed_by = NULL, completed_at = NULL
+                WHERE id = ?
+            ''', (new_status, item_id))
+        
         conn.commit()
         conn.close()
         
@@ -235,7 +246,7 @@ def delete_shopping_item_api(item_id):
         conn = get_db_connection()
         
         # Validate ownership or admin rights
-        if not validate_ownership(conn, 'shopping_items', item_id, request.session['user']):
+        if not validate_ownership(conn, 'shopping_items', item_id, session['user']):
             conn.close()
             return jsonify({'error': 'Unauthorized'}), 403
         
@@ -249,7 +260,7 @@ def delete_shopping_item_api(item_id):
         conn.commit()
         conn.close()
         
-        user_id = request.session['user']['id']
+        user_id = session['user']['id']
         logger.info(f"User {user_id} deleted shopping item {item_id}")
         
         return jsonify({'success': True, 'message': 'Item deleted successfully'})

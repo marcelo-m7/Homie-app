@@ -20,9 +20,9 @@ def chores_list():
     # Get all chores with user information
     all_chores = conn.execute('''
         SELECT c.*, 
-               au.username as added_by_name,
-               asu.username as assigned_to_name,
-               cu.username as completed_by_name
+               au.username as added_by_username,
+               asu.username as assigned_to_username,
+               cu.username as completed_by_username
         FROM chores c
         LEFT JOIN users au ON c.added_by = au.id
         LEFT JOIN users asu ON c.assigned_to = asu.id  
