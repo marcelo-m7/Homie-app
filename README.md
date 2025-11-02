@@ -86,7 +86,7 @@ Simple user selection without passwords - perfect for family use
 **Example local users setup:**
 ```bash
 OIDC_ENABLED=false
-USERS=dad:dad@family.com:Dad,mom:mom@family.com:Mom,child1:child@family.com:Child One
+USERS=Dad,Bill,Sarah
 ```
 
 ## Development
