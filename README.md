@@ -39,7 +39,7 @@ A simple family utility app for managing household tasks with secure authenticat
    ```yaml
    - SECRET_KEY=your-random-secret-key-here
    - OIDC_ENABLED=false
-   - USERS=dad:dad@family.com:Dad,mom:mom@family.com:Mom,kid:kid@family.com:Kid
+   - USERS=Dad,Bill,Sarah
    ```
 
 4. **Start:**
