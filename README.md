@@ -63,7 +63,7 @@ Copy `.env.sample` to `.env` and fill in your values, or edit the environment va
 - `ALLOWED_EMAILS` - Who can access the app
 
 **For Local mode (OIDC_ENABLED=false):**
-- `USERS` - Local users in format: `username1:email1:Full Name 1,username2:email2:Full Name 2`
+- `USERS` - Local users in format: `username1,username2,username3`
 
 **Important:** Configure `{your-base-url}/auth/callback` as the callback URL in your OIDC provider.
 
