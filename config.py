@@ -176,7 +176,7 @@ def load_local_users():
                 else:
                     logger.warning(f"Invalid user entry format: {entry}")
             else:
-                # Simple format: just the name (e.g., "Emma,Cam")
+                # Simple format: just the name
                 name = entry.strip()
                 if name:
                     username = name.lower()
