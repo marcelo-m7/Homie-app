@@ -26,6 +26,10 @@
                    class="{% if view == 'paid' %}border-gray-500 text-gray-600 dark:text-gray-300{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     <i class="fas fa-check-circle mr-2"></i>Paid Bills
                 </a>
+                <a href="#" onclick="showCategoriesModal(); return false;" 
+                   class="border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-tags mr-2"></i>Manage Categories
+                </a>
             </nav>
         </div>
     </div>
@@ -292,6 +296,68 @@
     </div>
 </div>
 
+<!-- Categories Management Modal -->
+<div id="categoriesModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+    <div class="relative mx-auto p-0 border-0 w-full max-w-2xl shadow-2xl rounded-xl bg-white dark:bg-gray-800 m-4">
+        <div class="relative">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-t-xl">
+                <h3 class="text-xl font-semibold">
+                    <i class="fas fa-tags mr-2"></i>Manage Categories
+                </h3>
+                <button onclick="closeCategoriesModal()" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6">
+                <!-- Add New Category -->
+                <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Add New Category</h4>
+                    <div class="flex gap-3">
+                        <input type="text" id="newCategoryName" placeholder="Category name"
+                               class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                               onkeypress="if(event.key === 'Enter') addCategory()">
+                        <button onclick="addCategory()"
+                                class="px-6 py-2 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-lg transition-colors font-medium">
+                            <i class="fas fa-plus mr-2"></i>Add
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Categories List -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-900">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category Name</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- Categories will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Categories in use by bills cannot be deleted. You can rename them instead.
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                <button type="button" onclick="closeCategoriesModal()"
+                        class="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors font-medium">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Currency symbol from server
 const CURRENCY = '{{ currency }}';
@@ -312,6 +378,12 @@ function closeEditModal() {
 document.getElementById('editBillModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeEditModal();
+    }
+});
+
+document.getElementById('categoriesModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCategoriesModal();
     }
 });
 
@@ -511,5 +583,142 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 500);
 });
+
+// Category Management Functions
+function showCategoriesModal() {
+    const modal = document.getElementById('categoriesModal');
+    modal.classList.remove('hidden');
+    loadCategories();
+}
+
+function closeCategoriesModal() {
+    const modal = document.getElementById('categoriesModal');
+    modal.classList.add('hidden');
+    // Reload page to refresh category dropdown
+    location.reload();
+}
+
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/budget/categories');
+        const data = await response.json();
+        
+        const tbody = document.getElementById('categoriesTableBody');
+        tbody.innerHTML = '';
+        
+        data.categories.forEach(cat => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="px-6 py-4">
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">${cat.name}</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <button onclick="editCategory(${cat.id}, '${cat.name}')" class="text-blue-600 dark:text-blue-400 hover:underline mr-4">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                    <button onclick="deleteCategory(${cat.id}, '${cat.name}')" class="text-red-600 dark:text-red-400 hover:underline">
+                        <i class="fas fa-trash mr-1"></i>Delete
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        alert('Failed to load categories');
+    }
+}
+
+async function addCategory() {
+    const nameInput = document.getElementById('newCategoryName');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+        alert('Please enter a category name');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/categories', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ name, monthly_limit: 0 })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            nameInput.value = '';
+            loadCategories();
+            alert('Category added successfully');
+        } else {
+            alert(data.error || 'Failed to add category');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to add category');
+    }
+}
+
+async function editCategory(id, currentName) {
+    const newName = prompt('Enter new category name:', currentName);
+    
+    if (!newName || newName === currentName) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/categories/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ name: newName })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            loadCategories();
+            alert('Category updated successfully');
+        } else {
+            alert(data.error || 'Failed to update category');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to update category');
+    }
+}
+
+async function deleteCategory(id, name) {
+    if (!confirm(`Are you sure you want to delete the category "${name}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/categories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-Token': '{{ csrf_token() }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            loadCategories();
+            alert('Category deleted successfully');
+        } else {
+            alert(data.error || 'Failed to delete category');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to delete category');
+    }
+}
 </script>
 {% endblock %}

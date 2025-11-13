@@ -318,3 +318,122 @@ def update_budget_category(category_id):
     except Exception as e:
         logger.error(f"Error updating budget category: {e}")
         return jsonify({'error': 'Failed to update category'}), 500
+
+@bills_bp.route('/api/categories', methods=['POST'])
+@api_auth_required
+@csrf_protect
+def add_category():
+    """Add a new bill category"""
+    try:
+        data = request.get_json()
+        if not data or 'name' not in data:
+            return jsonify({'error': 'Category name is required'}), 400
+        
+        name = sanitize_input(data['name'])
+        if not name:
+            return jsonify({'error': 'Category name cannot be empty'}), 400
+        
+        monthly_limit = float(data.get('monthly_limit', 0))
+        if monthly_limit < 0:
+            return jsonify({'error': 'Monthly limit cannot be negative'}), 400
+        
+        conn = get_db_connection()
+        
+        # Check if category already exists
+        existing = conn.execute('SELECT id FROM budget_categories WHERE name = ?', (name,)).fetchone()
+        if existing:
+            conn.close()
+            return jsonify({'error': 'Category already exists'}), 400
+        
+        conn.execute('''
+            INSERT INTO budget_categories (name, monthly_limit)
+            VALUES (?, ?)
+        ''', (name, monthly_limit))
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {session['user']['id']} added category: {name}")
+        return jsonify({'success': True, 'message': 'Category added successfully'})
+        
+    except Exception as e:
+        logger.error(f"Error adding category: {e}")
+        return jsonify({'error': 'Failed to add category'}), 500
+
+@bills_bp.route('/api/categories/<int:category_id>', methods=['PUT'])
+@api_auth_required
+@csrf_protect
+def edit_category(category_id):
+    """Edit a bill category name"""
+    try:
+        data = request.get_json()
+        if not data or 'name' not in data:
+            return jsonify({'error': 'Category name is required'}), 400
+        
+        name = sanitize_input(data['name'])
+        if not name:
+            return jsonify({'error': 'Category name cannot be empty'}), 400
+        
+        conn = get_db_connection()
+        
+        # Check if new name already exists (excluding current category)
+        existing = conn.execute(
+            'SELECT id FROM budget_categories WHERE name = ? AND id != ?',
+            (name, category_id)
+        ).fetchone()
+        if existing:
+            conn.close()
+            return jsonify({'error': 'Category name already exists'}), 400
+        
+        # Get old name for updating bills
+        old_category = conn.execute('SELECT name FROM budget_categories WHERE id = ?', (category_id,)).fetchone()
+        if not old_category:
+            conn.close()
+            return jsonify({'error': 'Category not found'}), 404
+        
+        # Update category name
+        conn.execute('UPDATE budget_categories SET name = ? WHERE id = ?', (name, category_id))
+        
+        # Update all bills with this category
+        conn.execute('UPDATE bills SET category = ? WHERE category = ?', (name, old_category['name']))
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {session['user']['id']} edited category {category_id} to: {name}")
+        return jsonify({'success': True, 'message': 'Category updated successfully'})
+        
+    except Exception as e:
+        logger.error(f"Error editing category: {e}")
+        return jsonify({'error': 'Failed to edit category'}), 500
+
+@bills_bp.route('/api/categories/<int:category_id>', methods=['DELETE'])
+@api_auth_required
+@csrf_protect
+def delete_category(category_id):
+    """Delete a bill category"""
+    try:
+        conn = get_db_connection()
+        
+        # Check if category is in use
+        bills_using = conn.execute('SELECT COUNT(*) as count FROM bills WHERE category = (SELECT name FROM budget_categories WHERE id = ?)', (category_id,)).fetchone()
+        
+        if bills_using['count'] > 0:
+            conn.close()
+            return jsonify({'error': f'Cannot delete category. {bills_using["count"]} bill(s) are using it.'}), 400
+        
+        result = conn.execute('DELETE FROM budget_categories WHERE id = ?', (category_id,))
+        
+        if result.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Category not found'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"User {session['user']['id']} deleted category {category_id}")
+        return jsonify({'success': True, 'message': 'Category deleted successfully'})
+        
+    except Exception as e:
+        logger.error(f"Error deleting category: {e}")
+        return jsonify({'error': 'Failed to delete category'}), 500
