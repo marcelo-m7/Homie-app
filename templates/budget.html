@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Budget Tracker{% endblock %}
 
-{% block head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-{% endblock %}
-
 {% block content %}
 <div class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center mb-6">
@@ -12,14 +8,6 @@
         <a href="{{ url_for('bills.bills_list') }}" class="text-blue-600 dark:text-blue-400 hover:underline">
             Back to Bills
         </a>
-    </div>
-
-    <!-- Month Selector -->
-    <div class="mb-6">
-        <label for="monthSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Month</label>
-        <select id="monthSelect" class="w-full md:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option value="{{ current_month }}">{{ current_month_name }}</option>
-        </select>
     </div>
 
     <!-- Budget Summary Cards -->
@@ -41,25 +29,6 @@
             <p class="text-3xl font-bold {% if analytics.remaining < 0 %}text-red-600 dark:text-red-400{% else %}text-blue-600 dark:text-blue-400{% endif %}">
                 {{ currency }}{{ "%.2f"|format(analytics.remaining) }}
             </p>
-        </div>
-    </div>
-
-    <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Spending by Category Chart -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Spending by Category</h2>
-            <div class="relative h-64">
-                <canvas id="categoryChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Monthly Trend Chart -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Spending Trend (Last 6 Months)</h2>
-            <div class="relative h-64">
-                <canvas id="trendChart"></canvas>
-            </div>
         </div>
     </div>
 
@@ -155,103 +124,6 @@
 
 <script>
 const CURRENCY = '{{ currency }}';
-const analytics = {{ analytics|tojson }};
-const history = {{ history|tojson }};
-
-// Category Chart
-const categoryCtx = document.getElementById('categoryChart');
-const categoryChart = new Chart(categoryCtx, {
-    type: 'doughnut',
-    data: {
-        labels: analytics.categories.map(c => c.name),
-        datasets: [{
-            data: analytics.categories.map(c => c.spent),
-            backgroundColor: [
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(245, 158, 11, 0.8)',
-                'rgba(239, 68, 68, 0.8)',
-                'rgba(139, 92, 246, 0.8)'
-            ],
-            borderWidth: 2,
-            borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151'
-                }
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return context.label + ': ' + CURRENCY + context.parsed.toFixed(2);
-                    }
-                }
-            }
-        }
-    }
-});
-
-// Trend Chart
-const trendCtx = document.getElementById('trendChart');
-const trendChart = new Chart(trendCtx, {
-    type: 'line',
-    data: {
-        labels: history.map(h => h.month),
-        datasets: [{
-            label: 'Total Spending',
-            data: history.map(h => h.total),
-            borderColor: 'rgba(59, 130, 246, 1)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return 'Spending: ' + CURRENCY + context.parsed.y.toFixed(2);
-                    }
-                }
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return CURRENCY + value.toFixed(0);
-                    },
-                    color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151'
-                },
-                grid: {
-                    color: document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'
-                }
-            },
-            x: {
-                ticks: {
-                    color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151'
-                },
-                grid: {
-                    color: document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'
-                }
-            }
-        }
-    }
-});
 
 // Modal Functions
 function editCategoryLimit(id, name, currentLimit) {

@@ -68,18 +68,18 @@
                     </div>
                     <div>
                         <label for="due_day" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Due Day *
+                            Due Day (optional)
                         </label>
-                        <select name="due_day" id="due_day" required
+                        <select name="due_day" id="due_day"
                                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
-                            <option value="">Select day</option>
+                            <option value="">No specific day</option>
                             {% for day in range(1, 32) %}
                             <option value="{{ day }}">{{ day }}{{ 'st' if day == 1 or day == 21 or day == 31 else ('nd' if day == 2 or day == 22 else ('rd' if day == 3 or day == 23 else 'th')) }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Category
@@ -97,16 +97,11 @@
                         </label>
                         <select name="recurrence_pattern" id="recurrence_pattern"
                                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
-                            <option value="monthly">Monthly</option>
+                            <option value="">One-time bill</option>
+                            <option value="monthly" selected>Monthly</option>
                             <option value="weekly">Weekly</option>
                             <option value="yearly">Yearly</option>
                         </select>
-                    </div>
-                    <div class="flex items-end">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" name="is_recurring" class="w-5 h-5 text-gray-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-gray-400" checked>
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recurring bill</span>
-                        </label>
                     </div>
                 </div>
                 <div class="flex justify-end pt-4">

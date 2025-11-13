@@ -143,7 +143,7 @@ def mark_bill_paid(bill_id, user_id, payment_date=None):
         conn.close()
 
 def get_budget_analytics(year=None, month=None):
-    """Get budget analytics for specified period"""
+    """Get budget analytics for specified period including recurring bills"""
     conn = get_db_connection()
     
     if year is None:
@@ -152,8 +152,8 @@ def get_budget_analytics(year=None, month=None):
         month = datetime.now().month
     
     try:
-        # Get spending by category for the month
-        spending = conn.execute('''
+        # Get paid bills spending by category for the month
+        paid_spending = conn.execute('''
             SELECT 
                 category,
                 SUM(amount) as total_spent,
@@ -165,34 +165,70 @@ def get_budget_analytics(year=None, month=None):
             GROUP BY category
         ''', (str(year), f"{month:02d}")).fetchall()
         
+        # Get unpaid recurring bills (convert to monthly equivalent)
+        recurring_bills = conn.execute('''
+            SELECT 
+                category,
+                amount,
+                recurrence_pattern,
+                is_recurring
+            FROM bills
+            WHERE is_paid = FALSE
+            AND is_recurring = TRUE
+        ''').fetchall()
+        
+        # Calculate monthly equivalent for recurring bills by category
+        recurring_monthly = {}
+        for bill in recurring_bills:
+            category = bill['category'] or 'Other'
+            amount = bill['amount']
+            pattern = bill['recurrence_pattern'] or 'monthly'
+            
+            # Convert to monthly equivalent
+            if pattern == 'weekly':
+                monthly_amount = amount * 4
+            elif pattern == 'yearly':
+                monthly_amount = amount / 12
+            else:  # monthly
+                monthly_amount = amount
+            
+            recurring_monthly[category] = recurring_monthly.get(category, 0) + monthly_amount
+        
         # Get budget limits
         categories = conn.execute('SELECT * FROM budget_categories').fetchall()
         
         # Combine data
-        analytics = []
+        category_data = []
         total_spent = 0
         total_budget = 0
         
         for cat in categories:
-            spent = next((s['total_spent'] for s in spending if s['category'] == cat['name']), 0)
+            # Get paid spending for this category
+            paid = next((s['total_spent'] for s in paid_spending if s['category'] == cat['name']), 0)
+            # Get recurring bill monthly equivalent for this category
+            recurring = recurring_monthly.get(cat['name'], 0)
+            # Total spending = paid bills + recurring bills (monthly equivalent)
+            spent = float(paid) + float(recurring)
             limit = cat['monthly_limit'] or 0
             
-            analytics.append({
-                'category': cat['name'],
-                'spent': float(spent),
-                'limit': float(limit),
-                'color': cat['color'],
-                'percentage': (spent / limit * 100) if limit > 0 else 0,
-                'over_budget': spent > limit if limit > 0 else False
+            category_data.append({
+                'id': cat['id'],
+                'name': cat['name'],
+                'spent': spent,
+                'monthly_limit': float(limit),
+                'remaining': float(limit) - spent,
+                'percent_used': (spent / limit * 100) if limit > 0 else 0,
+                'color': cat['color']
             })
             
-            total_spent += float(spent)
+            total_spent += spent
             total_budget += float(limit)
         
         return {
-            'analytics': analytics,
+            'categories': category_data,
             'total_spent': total_spent,
             'total_budget': total_budget,
+            'remaining': total_budget - total_spent,
             'period': f"{year}-{month:02d}"
         }
         
@@ -203,19 +239,38 @@ def get_budget_analytics(year=None, month=None):
         conn.close()
 
 def get_spending_history(months=6):
-    """Get spending history for the last N months"""
+    """Get spending history for the last N months including recurring bills"""
     conn = get_db_connection()
     
     try:
         history = []
         today = datetime.now()
         
+        # Get recurring bills monthly equivalent once (they apply to all months)
+        recurring_bills = conn.execute('''
+            SELECT amount, recurrence_pattern, is_recurring
+            FROM bills
+            WHERE is_paid = FALSE AND is_recurring = TRUE
+        ''').fetchall()
+        
+        recurring_monthly_total = 0
+        for bill in recurring_bills:
+            amount = bill['amount']
+            pattern = bill['recurrence_pattern'] or 'monthly'
+            
+            if pattern == 'weekly':
+                recurring_monthly_total += amount * 4
+            elif pattern == 'yearly':
+                recurring_monthly_total += amount / 12
+            else:  # monthly
+                recurring_monthly_total += amount
+        
         for i in range(months):
             date = today - relativedelta(months=i)
             year = date.year
             month = date.month
             
-            total = conn.execute('''
+            paid_total = conn.execute('''
                 SELECT SUM(amount) as total
                 FROM bills
                 WHERE is_paid = TRUE
@@ -223,9 +278,12 @@ def get_spending_history(months=6):
                 AND strftime('%m', paid_date) = ?
             ''', (str(year), f"{month:02d}")).fetchone()
             
+            # Combine paid bills + recurring monthly equivalent
+            total = float(paid_total['total'] or 0) + recurring_monthly_total
+            
             history.append({
                 'month': date.strftime('%b %Y'),
-                'total': float(total['total'] or 0)
+                'total': total
             })
         
         return list(reversed(history))

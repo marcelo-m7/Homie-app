@@ -98,25 +98,13 @@ def paid_bills_list():
 @login_required
 def budget_dashboard():
     """Display budget analytics dashboard"""
-    from datetime import datetime
-    
     analytics = get_budget_analytics()
-    history = get_spending_history(months=6)
     
     conn = get_db_connection()
     categories = conn.execute('SELECT * FROM budget_categories ORDER BY name').fetchall()
     conn.close()
     
-    now = datetime.now()
-    current_month = now.strftime('%Y-%m')
-    current_month_name = now.strftime('%B %Y')
-    
-    return render_template('budget.html', 
-                         analytics=analytics, 
-                         history=history, 
-                         categories=categories,
-                         current_month=current_month,
-                         current_month_name=current_month_name)
+    return render_template('budget.html', analytics=analytics, categories=categories)
 
 @bills_bp.route('/bills/add', methods=['POST'])
 @login_required
@@ -137,18 +125,28 @@ def add_bill():
             flash('Invalid amount format', 'error')
             return redirect(url_for('bills.bills_list'))
         
-        try:
-            due_day = int(request.form.get('due_day', '1'))
-            if due_day < 1 or due_day > 31:
-                flash('Due day must be between 1 and 31', 'error')
+        # Due day is optional now - use 1 as default if not specified
+        due_day_str = request.form.get('due_day', '').strip()
+        due_day = 1  # Default to 1st of month
+        if due_day_str:
+            try:
+                due_day = int(due_day_str)
+                if due_day < 1 or due_day > 31:
+                    flash('Due day must be between 1 and 31', 'error')
+                    return redirect(url_for('bills.bills_list'))
+            except (ValueError, TypeError):
+                flash('Invalid due day format', 'error')
                 return redirect(url_for('bills.bills_list'))
-        except (ValueError, TypeError):
-            flash('Invalid due day format', 'error')
-            return redirect(url_for('bills.bills_list'))
         
         category = sanitize_input(request.form.get('category', 'Other'))
-        is_recurring = request.form.get('is_recurring') == 'on'
-        recurrence_pattern = request.form.get('recurrence_pattern', 'monthly')
+        
+        # Check recurrence pattern to determine if recurring
+        recurrence_pattern = request.form.get('recurrence_pattern', '').strip()
+        is_recurring = bool(recurrence_pattern)  # True if pattern is set, False if empty
+        
+        # If not recurring, clear the recurrence pattern
+        if not is_recurring:
+            recurrence_pattern = None
         
         user_id = session['user']['id']
         
