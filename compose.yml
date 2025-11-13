@@ -26,8 +26,12 @@ services:
       - OIDC_CLIENT_SECRET=your-client-secret
       
       # ===== Access Control Configuration =====
+      # NOTE: Use either ALLOWED_EMAILS or ALLOWED_GROUPS, not both. Groups take precedence.
       # Allowed email addresses (comma-separated list of who can access the app - used with OIDC)
-      - ALLOWED_EMAILS=user1@example.com,user2@example.com,admin@example.com
+      # - ALLOWED_EMAILS=user1@example.com,user2@example.com,admin@example.com
+      
+      # Allowed groups from OIDC provider (comma-separated list)
+      - ALLOWED_GROUPS=family,admin,users
       
       # ===== Local Users Configuration (when OIDC is disabled) =====
       # Local users list (simple names or full format username:email:Full Name)

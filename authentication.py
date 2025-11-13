@@ -32,7 +32,7 @@ def build_authorization_url(oidc_config, state, nonce, base_url):
     auth_params = {
         'response_type': 'code',
         'client_id': oidc_config['client_id'],
-        'scope': 'openid profile email',
+        'scope': 'openid profile email groups',  # Request groups scope
         'redirect_uri': f"{base_url}/auth/callback",
         'state': state,
         'nonce': nonce
@@ -84,16 +84,45 @@ def get_userinfo(oidc_config, access_token):
         raise AuthenticationError("Failed to get user information")
 
 def is_user_authorized(userinfo, access_control):
-    """Check if user is authorized to access the application"""
-    email = userinfo.get('email')
-    if not email:
+    """
+    Check if user is authorized to access the application.
+    Uses group-based authorization if ALLOWED_GROUPS is configured,
+    otherwise falls back to email-based authorization.
+    """
+    # Priority 1: Check group membership if groups are configured
+    if access_control.get('allowed_groups'):
+        user_groups = userinfo.get('groups', [])
+        
+        # Normalize groups to a list (some OIDC providers return a string)
+        if isinstance(user_groups, str):
+            user_groups = [user_groups]
+        
+        # Check if user is in any of the allowed groups
+        for group in user_groups:
+            if group in access_control['allowed_groups']:
+                logger.info(f"User authorized via group: {group}")
+                return True
+        
+        logger.warning(f"User not in any allowed groups. User groups: {user_groups}")
         return False
     
-    # Check if user is in allowed emails list
-    if access_control['allowed_emails'] and email not in access_control['allowed_emails']:
+    # Priority 2: Check email if emails are configured (and groups are not)
+    if access_control.get('allowed_emails'):
+        email = userinfo.get('email')
+        if not email:
+            logger.warning("User has no email in userinfo")
+            return False
+        
+        if email in access_control['allowed_emails']:
+            logger.info(f"User authorized via email: {email}")
+            return True
+        
+        logger.warning(f"User email not in allowed list: {email}")
         return False
     
-    return True
+    # No access control configured - deny by default for security
+    logger.warning("No access control configured (neither groups nor emails)")
+    return False
 
 def login_required(f):
     """Decorator to require authentication for routes"""

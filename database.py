@@ -337,7 +337,7 @@ def create_or_update_user(userinfo, access_control):
     is_admin = False  # Simplified: no admin distinction needed
     
     try:
-        # Try to find existing user
+        # Try to find existing user by oidc_sub (primary identifier)
         user = conn.execute('''
             SELECT * FROM users WHERE oidc_sub = ?
         ''', (oidc_sub,)).fetchone()
@@ -350,13 +350,30 @@ def create_or_update_user(userinfo, access_control):
                     is_admin = ?, last_login = ?
                 WHERE oidc_sub = ?
             ''', (username, email, full_name, is_admin, datetime.now().isoformat(), oidc_sub))
+            logger.info(f"Updated existing OIDC user: {email}")
         else:
-            # Create new user
-            conn.execute('''
-                INSERT INTO users (username, email, full_name, is_admin, oidc_sub, last_login, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (username, email, full_name, is_admin, oidc_sub, 
-                  datetime.now().isoformat(), datetime.now().isoformat()))
+            # Check if a user with this email or username exists (from local auth or previous setup)
+            existing_user = conn.execute('''
+                SELECT * FROM users WHERE email = ? OR username = ?
+            ''', (email, username)).fetchone()
+            
+            if existing_user:
+                # Update the existing user to link with OIDC
+                logger.info(f"Linking existing user {email} to OIDC account")
+                conn.execute('''
+                    UPDATE users SET 
+                        oidc_sub = ?, full_name = ?, 
+                        is_admin = ?, last_login = ?
+                    WHERE email = ? OR username = ?
+                ''', (oidc_sub, full_name, is_admin, datetime.now().isoformat(), email, username))
+            else:
+                # Create new user
+                logger.info(f"Creating new OIDC user: {email}")
+                conn.execute('''
+                    INSERT INTO users (username, email, full_name, is_admin, oidc_sub, last_login, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (username, email, full_name, is_admin, oidc_sub, 
+                      datetime.now().isoformat(), datetime.now().isoformat()))
         
         conn.commit()
         

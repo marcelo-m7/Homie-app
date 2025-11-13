@@ -60,7 +60,10 @@ Copy `.env.sample` to `.env` and fill in your values, or edit the environment va
 **For OIDC mode (OIDC_ENABLED=true):**
 - `OIDC_BASE_URL` - Your authentication provider URL
 - `OIDC_CLIENT_ID` & `OIDC_CLIENT_SECRET` - From your OIDC provider
-- `ALLOWED_EMAILS` - Who can access the app
+- **Access Control:** Choose ONE of the following:
+  - `ALLOWED_GROUPS` - Comma-separated list of OIDC groups (recommended)
+  - `ALLOWED_EMAILS` - Comma-separated list of email addresses
+  - **Note:** If both are set, `ALLOWED_GROUPS` takes precedence
 
 **For Local mode (OIDC_ENABLED=false):**
 - `USERS` - Local users in format: `username1,username2,username3`
@@ -105,6 +108,9 @@ python app.py
 **Common issues:**
 - **Can't login?** Check your OIDC callback URL is set correctly
 - **OIDC errors?** Verify your client ID/secret and base URL
-- **Access denied?** Add your email to `ALLOWED_EMAILS`
+- **Access denied?** 
+  - If using groups: Ensure user is in an `ALLOWED_GROUPS` group
+  - If using emails: Add your email to `ALLOWED_EMAILS`
+  - Make sure your OIDC provider includes groups in the token (if using groups)
 
 The app uses OIDC auto-discovery but falls back to manual configuration if needed.

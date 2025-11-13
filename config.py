@@ -125,13 +125,23 @@ def get_oidc_configuration():
 def load_access_control():
     """Load access control configuration"""
     config = {
-        'allowed_emails': []
+        'allowed_emails': [],
+        'allowed_groups': []
     }
     
-    # Load from environment variables
-    allowed_emails_str = os.getenv('ALLOWED_EMAILS', '')
-    if allowed_emails_str:
-        config['allowed_emails'] = [email.strip() for email in allowed_emails_str.split(',')]
+    # Load allowed groups from environment variables (takes precedence)
+    allowed_groups_str = os.getenv('ALLOWED_GROUPS', '')
+    if allowed_groups_str:
+        config['allowed_groups'] = [group.strip() for group in allowed_groups_str.split(',')]
+        logger.info(f"Access control: Using ALLOWED_GROUPS with {len(config['allowed_groups'])} groups")
+    else:
+        # Load allowed emails only if groups are not configured
+        allowed_emails_str = os.getenv('ALLOWED_EMAILS', '')
+        if allowed_emails_str:
+            config['allowed_emails'] = [email.strip() for email in allowed_emails_str.split(',')]
+            logger.info(f"Access control: Using ALLOWED_EMAILS with {len(config['allowed_emails'])} emails")
+        else:
+            logger.warning("No access control configured (neither ALLOWED_GROUPS nor ALLOWED_EMAILS)")
     
     # Add allowed domains for redirect validation
     base_url = os.getenv('BASE_URL', 'http://localhost:5000')
