@@ -5,6 +5,7 @@ import sqlite3
 import os
 import logging
 from datetime import datetime
+from config import get_currency_symbol
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +277,7 @@ def get_recent_activities(limit=10):
         
         for bill in bills:
             activities.append({
-                'description': f"{bill['username']} added bill: {bill['bill_name']} (£{bill['amount']})",
+                'description': f"{bill['username']} added bill: {bill['bill_name']} ({get_currency_symbol()}{bill['amount']})",
                 'time': bill['created_at'],
                 'icon': 'fa-receipt',
                 'type': 'bill_added'

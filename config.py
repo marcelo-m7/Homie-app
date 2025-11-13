@@ -190,6 +190,10 @@ def load_local_users():
     logger.info(f"Loaded {len(users)} local users")
     return users
 
+def get_currency_symbol():
+    """Get the currency symbol to use in the application"""
+    return os.getenv('CURRENCY', '£')
+
 def get_app_config():
     """Get Flask application configuration"""
     return {

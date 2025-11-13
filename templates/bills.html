@@ -1,18 +1,4 @@
-{% extends "base.html" %}            <h3 class="text-lg font-sem                    <butt                        <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-gray-300 to-gray-400 rounded-xl flex items-center justify-center shadow-lg">
-                            <i class="fas fa-receipt text-gray-700"></i>
-                        </div>type="submit"
-                            class="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-lg hover:shadow-xl">
-                        <i class="fas fa-plus mr-2"></i>Add Bill
-                    </button>d text-gray-900 dark:text-white">
-                <i class="fas fa-plus-circle mr-2 text-gray-600"></i>Add New Bill
-            </h3> Card -->
-    <div class="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-xl p-8 mb-8 shadow-lg">
-        <div class="text-center">
-            <h2 class="text-2xl font-bold mb-2">Monthly Total</h2>
-            <p class="text-5xl font-bold">£{{ "%.2f"|format(monthly_total or 0) }}</p>
-            <p class="text-gray-700 mt-2">{{ bills|length }} bill{{ 's' if bills|length != 1 else '' }} tracked</p>
-        </div>
-    </div>}
+{% extends "base.html" %}
 
 {% block title %}Bills - Homie{% endblock %}
 
@@ -32,7 +18,7 @@
     <div class="bg-gradient-to-r from-gray-300 to-gray-400 text-white rounded-xl p-8 mb-8 shadow-lg">
         <div class="text-center">
             <h2 class="text-2xl font-bold mb-2">Monthly Total</h2>
-            <p class="text-5xl font-bold">£{{ "%.2f"|format(monthly_total or 0) }}</p>
+            <p class="text-5xl font-bold">{{ currency }}{{ "%.2f"|format(monthly_total or 0) }}</p>
             <p class="text-grey-100 mt-2">{{ bills|length }} bill{{ 's' if bills|length != 1 else '' }} tracked</p>
         </div>
     </div>
@@ -57,7 +43,7 @@
                     </div>
                     <div>
                         <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Amount (£) *
+                            Amount ({{ currency }}) *
                         </label>
                         <input type="number" name="amount" id="amount" step="0.01" min="0" required
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
@@ -114,7 +100,7 @@
                     <div class="flex items-center space-x-4">
                         <div class="text-right">
                             <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                                £{{ "%.2f"|format(bill.amount) }}
+                                {{ currency }}{{ "%.2f"|format(bill.amount) }}
                             </p>
                         </div>
                         <!-- Actions Dropdown -->
@@ -187,7 +173,7 @@
                     </div>
                     <div>
                         <label for="editAmount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Amount (£) *
+                            Amount ({{ currency }}) *
                         </label>
                         <input type="number" id="editAmount" name="amount" step="0.01" min="0" required
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
@@ -222,6 +208,9 @@
 </div>
 
 <script>
+// Currency symbol from server
+const CURRENCY = '{{ currency }}';
+
 function editBill(billId, billName, amount, dueDay) {
     document.getElementById('editBillId').value = billId;
     document.getElementById('editBillName').value = billName;
@@ -254,7 +243,7 @@ function animateCountUp(element, start, end, duration = 1500) {
         const easeOutCubic = 1 - Math.pow(1 - progress, 3);
         const current = start + (difference * easeOutCubic);
         
-        element.textContent = '£' + current.toFixed(2);
+        element.textContent = CURRENCY + current.toFixed(2);
         
         if (progress < 1) {
             requestAnimationFrame(updateCount);
@@ -271,7 +260,7 @@ function calculateCurrentTotal() {
     
     billElements.forEach(row => {
         const amountText = row.querySelector('.text-2xl.font-bold').textContent;
-        const amount = parseFloat(amountText.replace('£', ''));
+        const amount = parseFloat(amountText.replace(CURRENCY, ''));
         if (!isNaN(amount)) {
             total += amount;
         }
@@ -287,7 +276,7 @@ function updateMonthlyTotal(newTotal = null) {
     
     if (!totalElement) return;
     
-    const currentDisplayed = parseFloat(totalElement.textContent.replace('£', '')) || 0;
+    const currentDisplayed = parseFloat(totalElement.textContent.replace(CURRENCY, '')) || 0;
     const actualTotal = newTotal !== null ? newTotal : calculateCurrentTotal();
     const billCount = document.querySelectorAll('.item-row').length;
     
@@ -306,7 +295,7 @@ function deleteBill(billId, element) {
         // Get the amount before deletion for smooth animation
         const billRow = element.closest('.item-row');
         const amountText = billRow.querySelector('.text-2xl.font-bold').textContent;
-        const deletedAmount = parseFloat(amountText.replace('£', ''));
+        const deletedAmount = parseFloat(amountText.replace(CURRENCY, ''));
         
         fetch(`/delete_bill/${billId}`, {
             method: 'DELETE',
@@ -361,8 +350,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         const totalElement = document.querySelector('.text-5xl.font-bold');
         if (totalElement) {
-            const finalTotal = parseFloat(totalElement.textContent.replace('£', ''));
-            totalElement.textContent = '£0.00';
+            const finalTotal = parseFloat(totalElement.textContent.replace(CURRENCY, ''));
+            totalElement.textContent = CURRENCY + '0.00';
             animateCountUp(totalElement, 0, finalTotal, 1500);
         }
     }, 500);

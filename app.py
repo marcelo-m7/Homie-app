@@ -13,7 +13,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 # Import our custom modules
-from config import get_app_config, get_oidc_configuration, load_access_control, setup_logging, load_local_users
+from config import get_app_config, get_oidc_configuration, load_access_control, setup_logging, load_local_users, get_currency_symbol
 from database import init_db, get_dashboard_stats, get_recent_activities
 from authentication import (
     login_required, admin_required, generate_state, generate_nonce,
@@ -56,6 +56,11 @@ def create_app():
     @app.context_processor
     def inject_csrf_token():
         return dict(csrf_token=generate_csrf_token)
+    
+    # Template context processor for currency symbol
+    @app.context_processor
+    def inject_currency():
+        return dict(currency=get_currency_symbol())
     
     # Add custom Jinja filters
     @app.template_filter('title_case')
