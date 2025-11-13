@@ -103,9 +103,42 @@ def init_db():
             bill_name TEXT NOT NULL,
             amount DECIMAL(10,2) NOT NULL,
             due_day INTEGER NOT NULL,
+            category TEXT DEFAULT 'Other',
+            is_recurring BOOLEAN DEFAULT TRUE,
+            recurrence_pattern TEXT DEFAULT 'monthly',
+            is_paid BOOLEAN DEFAULT FALSE,
+            paid_date DATE,
+            paid_by INTEGER,
             added_by INTEGER NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (added_by) REFERENCES users (id)
+            FOREIGN KEY (added_by) REFERENCES users (id),
+            FOREIGN KEY (paid_by) REFERENCES users (id)
+        )
+    ''')
+    
+    # Budget categories table
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS budget_categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            monthly_limit DECIMAL(10,2),
+            color TEXT DEFAULT '#3B82F6',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Bill payments history table
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS bill_payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bill_id INTEGER NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            payment_date DATE NOT NULL,
+            paid_by INTEGER NOT NULL,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (bill_id) REFERENCES bills (id) ON DELETE CASCADE,
+            FOREIGN KEY (paid_by) REFERENCES users (id)
         )
     ''')
     
@@ -122,22 +155,54 @@ def init_db():
         conn.execute('ALTER TABLE shopping_items ADD COLUMN completed BOOLEAN DEFAULT FALSE')
         conn.commit()
     except sqlite3.OperationalError:
-        # Column already exists
         pass
     
     try:
         conn.execute('ALTER TABLE shopping_items ADD COLUMN completed_by INTEGER')
         conn.commit()
     except sqlite3.OperationalError:
-        # Column already exists
         pass
     
     try:
         conn.execute('ALTER TABLE shopping_items ADD COLUMN completed_at TIMESTAMP')
         conn.commit()
     except sqlite3.OperationalError:
-        # Column already exists
         pass
+    
+    # Bills table migrations
+    bills_columns = {
+        'category': "ALTER TABLE bills ADD COLUMN category TEXT DEFAULT 'Other'",
+        'is_recurring': "ALTER TABLE bills ADD COLUMN is_recurring BOOLEAN DEFAULT TRUE",
+        'recurrence_pattern': "ALTER TABLE bills ADD COLUMN recurrence_pattern TEXT DEFAULT 'monthly'",
+        'is_paid': "ALTER TABLE bills ADD COLUMN is_paid BOOLEAN DEFAULT FALSE",
+        'paid_date': "ALTER TABLE bills ADD COLUMN paid_date DATE",
+        'paid_by': "ALTER TABLE bills ADD COLUMN paid_by INTEGER"
+    }
+    
+    for column, sql in bills_columns.items():
+        try:
+            conn.execute(sql)
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+    
+    # Insert default budget categories
+    default_categories = [
+        ('Housing', 0, '#10B981'),
+        ('Utilities', 0, '#3B82F6'),
+        ('Subscriptions', 0, '#8B5CF6'),
+        ('Insurance', 0, '#F59E0B'),
+        ('Other', 0, '#6B7280')
+    ]
+    
+    for cat_name, limit, color in default_categories:
+        try:
+            conn.execute('''
+                INSERT OR IGNORE INTO budget_categories (name, monthly_limit, color)
+                VALUES (?, ?, ?)
+            ''', (cat_name, limit, color))
+        except sqlite3.OperationalError:
+            pass
     
     conn.commit()
     conn.close()
