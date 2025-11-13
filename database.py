@@ -186,23 +186,26 @@ def init_db():
         except sqlite3.OperationalError:
             pass
     
-    # Insert default budget categories
-    default_categories = [
-        ('Housing', 0, '#10B981'),
-        ('Utilities', 0, '#3B82F6'),
-        ('Subscriptions', 0, '#8B5CF6'),
-        ('Insurance', 0, '#F59E0B'),
-        ('Other', 0, '#6B7280')
-    ]
+    # Insert default budget categories only if none exist
+    existing_categories = conn.execute('SELECT COUNT(*) as count FROM budget_categories').fetchone()
     
-    for cat_name, limit, color in default_categories:
-        try:
-            conn.execute('''
-                INSERT OR IGNORE INTO budget_categories (name, monthly_limit, color)
-                VALUES (?, ?, ?)
-            ''', (cat_name, limit, color))
-        except sqlite3.OperationalError:
-            pass
+    if existing_categories['count'] == 0:
+        default_categories = [
+            ('Housing', 0, '#10B981'),
+            ('Utilities', 0, '#3B82F6'),
+            ('Subscriptions', 0, '#8B5CF6'),
+            ('Insurance', 0, '#F59E0B'),
+            ('Other', 0, '#6B7280')
+        ]
+        
+        for cat_name, limit, color in default_categories:
+            try:
+                conn.execute('''
+                    INSERT INTO budget_categories (name, monthly_limit, color)
+                    VALUES (?, ?, ?)
+                ''', (cat_name, limit, color))
+            except sqlite3.OperationalError:
+                pass
     
     conn.commit()
     conn.close()
