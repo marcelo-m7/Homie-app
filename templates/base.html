@@ -30,13 +30,15 @@
     
     <!-- Theme Script - Must run before any content renders -->
     <script>
-        // Immediately apply dark mode if set, before any content renders
         (function() {
             const theme = localStorage.getItem('theme');
-            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (theme === 'dark' || (theme === null && prefersDark)) {
                 document.documentElement.classList.add('dark');
                 document.documentElement.style.colorScheme = 'dark';
             } else {
+                document.documentElement.classList.remove('dark');
                 document.documentElement.style.colorScheme = 'light';
             }
         })();
@@ -139,9 +141,15 @@
                     colors: {
                         primary: {
                             50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
                             500: '#3b82f6',
                             600: '#2563eb',
                             700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
                         }
                     }
                 }
@@ -159,6 +167,20 @@
         /* Ensure smooth theme transitions */
         .theme-transition {
             transition: all 0.2s ease-in-out;
+        }
+        
+        /* Theme toggle icon visibility */
+        .dark .dark-icon {
+            display: inline-block;
+        }
+        .dark .light-icon {
+            display: none;
+        }
+        html:not(.dark) .dark-icon {
+            display: none;
+        }
+        html:not(.dark) .light-icon {
+            display: inline-block;
         }
     </style>
     
@@ -209,7 +231,17 @@
                                 <i class="fas fa-chevron-down ml-1"></i>
                             </button>
                             <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 theme-transition">
-                                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">
+                                <button id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-md flex items-center justify-between">
+                                    <span class="flex items-center">
+                                        <i class="fas fa-adjust mr-2"></i>
+                                        <span>Theme</span>
+                                    </span>
+                                    <span id="theme-label">
+                                        <i class="fas fa-moon dark-icon"></i>
+                                        <i class="fas fa-sun light-icon hidden"></i>
+                                    </span>
+                                </button>
+                                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-md">
                                     <i class="fas fa-sign-out-alt mr-2"></i>Logout
                                 </a>
                             </div>

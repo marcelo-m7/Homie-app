@@ -11,21 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone);
     const isIOSPWA = isIOS && isInStandaloneMode;
 
-    // Theme toggle
+    // Theme toggle functionality
     if (themeToggle) {
-        // Set initial state of toggle based on current theme
-        const updateToggleState = () => {
-            const isDark = document.documentElement.classList.contains('dark');
-            themeToggle.setAttribute('aria-checked', isDark ? 'true' : 'false');
-        };
-        
-        // Set initial state
-        updateToggleState();
-        
-        const toggleTheme = function() {
-            const currentlyDark = document.documentElement.classList.contains('dark');
+        const toggleTheme = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            if (currentlyDark) {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            if (isDark) {
                 document.documentElement.classList.remove('dark');
                 document.documentElement.style.colorScheme = 'light';
                 localStorage.setItem('theme', 'light');
@@ -34,16 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.documentElement.style.colorScheme = 'dark';
                 localStorage.setItem('theme', 'dark');
             }
-            
-            updateToggleState();
         };
 
-        // Use both click and touchend for iOS compatibility
         themeToggle.addEventListener('click', toggleTheme);
+        
         if (isIOSPWA) {
             themeToggle.addEventListener('touchend', function(e) {
                 e.preventDefault();
-                toggleTheme();
+                toggleTheme(e);
             });
         }
     }
