@@ -219,6 +219,9 @@
                                 <a href="{{ url_for('bills.bills_list') }}" class="nav-link text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-receipt mr-1"></i>Bills
                                 </a>
+                                <a href="{{ url_for('bills.budget_dashboard') }}" class="nav-link text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
+                                    <i class="fas fa-chart-pie mr-1"></i>Budget
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -272,6 +275,9 @@
                     </a>
                     <a href="{{ url_for('bills.bills_list') }}" class="block px-3 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                         <i class="fas fa-receipt mr-2"></i>Bills
+                    </a>
+                    <a href="{{ url_for('bills.budget_dashboard') }}" class="block px-3 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                        <i class="fas fa-chart-pie mr-2"></i>Budget
                     </a>
                 </div>
             </div>
