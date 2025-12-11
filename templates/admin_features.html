@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Feature Visibility{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            <i class="fas fa-user-shield mr-3"></i>Admin Panel
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Manage feature visibility for users</p>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div class="flex items-start">
+            <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+            <div>
+                <h3 class="text-sm font-medium text-blue-900 dark:text-blue-200">Feature Visibility Control</h3>
+                <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                    Toggle features on or off for each user. Hidden features will not appear in their navigation menu.
+                    Note: This only applies to OIDC users. Local mode users can access all features.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            User
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <i class="fas fa-shopping-cart"></i> Shopping
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <i class="fas fa-tasks"></i> Chores
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <i class="fas fa-calendar-alt"></i> Tracker
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <i class="fas fa-receipt"></i> Bills
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <i class="fas fa-chart-pie"></i> Budget
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for user in users_features %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                    <i class="fas fa-user text-primary-600 dark:text-primary-400"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ user.full_name or user.username }}
+                                        {% if user.is_admin %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                                            <i class="fas fa-shield-alt mr-1"></i>Admin
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        {% for feature in ['shopping', 'chores', 'tracker', 'bills', 'budget'] %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    class="sr-only peer feature-toggle"
+                                    data-user-id="{{ user.id }}"
+                                    data-feature="{{ feature }}"
+                                    {% if user.features[feature] %}checked{% endif %}
+                                >
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                            </label>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    {% if not users_features %}
+    <div class="text-center py-12">
+        <i class="fas fa-users text-gray-400 text-5xl mb-4"></i>
+        <p class="text-gray-500 dark:text-gray-400">No users found</p>
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="mt-8">
+        <a href="{{ url_for('dashboard') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="hidden fixed bottom-4 right-4 z-50 max-w-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
+    <div class="flex items-center">
+        <div id="toast-icon" class="flex-shrink-0"></div>
+        <div id="toast-message" class="ml-3 text-sm font-medium text-gray-900 dark:text-white"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle feature toggle switches
+    const toggles = document.querySelectorAll('.feature-toggle');
+    
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', async function() {
+            const userId = this.dataset.userId;
+            const feature = this.dataset.feature;
+            const isVisible = this.checked;
+            
+            try {
+                const response = await fetch('/admin/api/feature-visibility', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': window.csrfToken
+                    },
+                    body: JSON.stringify({
+                        user_id: parseInt(userId),
+                        feature_name: feature,
+                        is_visible: isVisible
+                    })
+                });
+                
+                if (response.ok) {
+                    showToast('success', `Feature ${isVisible ? 'enabled' : 'disabled'} successfully`);
+                } else {
+                    const data = await response.json();
+                    showToast('error', data.error || 'Failed to update feature');
+                    // Revert the toggle
+                    this.checked = !isVisible;
+                }
+            } catch (error) {
+                console.error('Error updating feature:', error);
+                showToast('error', 'Network error occurred');
+                // Revert the toggle
+                this.checked = !isVisible;
+            }
+        });
+    });
+    
+    function showToast(type, message) {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toast-icon');
+        const messageEl = document.getElementById('toast-message');
+        
+        // Set icon based on type
+        if (type === 'success') {
+            icon.innerHTML = '<i class="fas fa-check-circle text-green-500 text-xl"></i>';
+        } else {
+            icon.innerHTML = '<i class="fas fa-exclamation-circle text-red-500 text-xl"></i>';
+        }
+        
+        messageEl.textContent = message;
+        
+        // Show toast
+        toast.classList.remove('hidden');
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

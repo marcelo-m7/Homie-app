@@ -66,6 +66,8 @@ Copy `.env.sample` to `.env` and fill in your values, or edit the environment va
   - `ALLOWED_GROUPS` - Comma-separated list of OIDC groups (recommended)
   - `ALLOWED_EMAILS` - Comma-separated list of email addresses
   - **Note:** If both are set, `ALLOWED_GROUPS` takes precedence
+- **Admin Control (Optional):**
+  - `ADMIN_EMAILS` - Comma-separated list of admin email addresses who can manage feature visibility
 
 **For Local mode (OIDC_ENABLED=false):**
 - `USERS` - Local users in format: `username1,username2,username3`
@@ -93,6 +95,32 @@ Simple user selection without passwords - perfect for family use
 OIDC_ENABLED=false
 USERS=Dad,Bill,Sarah
 ```
+
+## Admin Features
+
+### Feature Visibility Control (OIDC Mode Only)
+
+Admins can control which features are visible to each user. This is useful for:
+- Hiding bills and budget from children's accounts
+- Customizing the experience for different family members
+- Managing access to sensitive financial information
+
+**Setup:**
+1. Add admin emails to your `.env` file:
+   ```bash
+   ADMIN_EMAILS=parent@example.com,spouse@example.com
+   ```
+
+2. Admins will see an "Admin" option in the user menu dropdown
+
+3. In the Admin panel, toggle features on/off for each user:
+   - Shopping
+   - Chores
+   - Tracker (Expiry tracking)
+   - Bills
+   - Budget
+
+**Note:** This feature only works with OIDC authentication. Local mode users can access all features - this is still a WIP.
 
 ## Development
 

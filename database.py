@@ -150,6 +150,21 @@ def init_db():
         )
     ''')
     
+    # Feature visibility table - tracks which features are visible to which users
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS feature_visibility (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            feature_name TEXT NOT NULL,
+            is_visible BOOLEAN DEFAULT TRUE,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_by INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+            FOREIGN KEY (updated_by) REFERENCES users (id),
+            UNIQUE(user_id, feature_name)
+        )
+    ''')
+    
     # Add missing columns to existing tables (migrations)
     try:
         conn.execute('ALTER TABLE shopping_items ADD COLUMN completed BOOLEAN DEFAULT FALSE')
@@ -402,7 +417,9 @@ def create_or_update_user(userinfo, access_control):
     username = userinfo.get('preferred_username', email.split('@')[0] if email else 'user')
     full_name = userinfo.get('name', '')
     oidc_sub = userinfo.get('sub')
-    is_admin = False  # Simplified: no admin distinction needed
+    
+    # Check if user is admin based on ADMIN_EMAILS
+    is_admin = email.lower() in [admin_email.lower() for admin_email in access_control.get('admin_emails', [])]
     
     try:
         # Try to find existing user by oidc_sub (primary identifier)
@@ -418,7 +435,7 @@ def create_or_update_user(userinfo, access_control):
                     is_admin = ?, last_login = ?
                 WHERE oidc_sub = ?
             ''', (username, email, full_name, is_admin, datetime.now().isoformat(), oidc_sub))
-            logger.info(f"Updated existing OIDC user: {email}")
+            logger.info(f"Updated existing OIDC user: {email} (admin: {is_admin})")
         else:
             # Check if a user with this email or username exists (from local auth or previous setup)
             existing_user = conn.execute('''
@@ -427,7 +444,7 @@ def create_or_update_user(userinfo, access_control):
             
             if existing_user:
                 # Update the existing user to link with OIDC
-                logger.info(f"Linking existing user {email} to OIDC account")
+                logger.info(f"Linking existing user {email} to OIDC account (admin: {is_admin})")
                 conn.execute('''
                     UPDATE users SET 
                         oidc_sub = ?, full_name = ?, 
@@ -436,7 +453,7 @@ def create_or_update_user(userinfo, access_control):
                 ''', (oidc_sub, full_name, is_admin, datetime.now().isoformat(), email, username))
             else:
                 # Create new user
-                logger.info(f"Creating new OIDC user: {email}")
+                logger.info(f"Creating new OIDC user: {email} (admin: {is_admin})")
                 conn.execute('''
                     INSERT INTO users (username, email, full_name, is_admin, oidc_sub, last_login, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -455,8 +472,129 @@ def create_or_update_user(userinfo, access_control):
         
     except Exception as e:
         conn.close()
-        logger.error(f"Error creating/updating user: {e}")
+        logger.error(f"Error creating/updating local user: {e}")
         raise
+
+def get_all_users():
+    """Get all users in the system"""
+    conn = get_db_connection()
+    users = conn.execute('''
+        SELECT id, username, email, full_name, is_admin, last_login
+        FROM users
+        ORDER BY username
+    ''').fetchall()
+    conn.close()
+    return users
+
+def get_user_feature_visibility(user_id, feature_name):
+    """Check if a specific feature is visible to a user"""
+    conn = get_db_connection()
+    
+    # Check if there's a specific visibility setting for this user/feature
+    visibility = conn.execute('''
+        SELECT is_visible FROM feature_visibility
+        WHERE user_id = ? AND feature_name = ?
+    ''', (user_id, feature_name)).fetchone()
+    
+    conn.close()
+    
+    # If no specific setting exists, default to visible
+    if visibility is None:
+        return True
+    
+    return bool(visibility['is_visible'])
+
+def get_all_user_features(user_id):
+    """Get all feature visibility settings for a user"""
+    conn = get_db_connection()
+    
+    # Define all available features
+    all_features = ['shopping', 'chores', 'tracker', 'bills', 'budget']
+    
+    # Get user's current settings
+    settings = conn.execute('''
+        SELECT feature_name, is_visible FROM feature_visibility
+        WHERE user_id = ?
+    ''', (user_id,)).fetchall()
+    
+    conn.close()
+    
+    # Build a dict with all features (default to visible if not set)
+    result = {feature: True for feature in all_features}
+    
+    for setting in settings:
+        result[setting['feature_name']] = bool(setting['is_visible'])
+    
+    return result
+
+def set_user_feature_visibility(user_id, feature_name, is_visible, updated_by):
+    """Set the visibility of a feature for a specific user"""
+    conn = get_db_connection()
+    
+    try:
+        # Check if setting exists
+        existing = conn.execute('''
+            SELECT id FROM feature_visibility
+            WHERE user_id = ? AND feature_name = ?
+        ''', (user_id, feature_name)).fetchone()
+        
+        if existing:
+            # Update existing setting
+            conn.execute('''
+                UPDATE feature_visibility
+                SET is_visible = ?, updated_at = ?, updated_by = ?
+                WHERE user_id = ? AND feature_name = ?
+            ''', (is_visible, datetime.now().isoformat(), updated_by, user_id, feature_name))
+        else:
+            # Create new setting
+            conn.execute('''
+                INSERT INTO feature_visibility (user_id, feature_name, is_visible, updated_at, updated_by)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (user_id, feature_name, is_visible, datetime.now().isoformat(), updated_by))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        conn.close()
+        logger.error(f"Error setting feature visibility: {e}")
+        return False
+
+def get_all_users_features():
+    """Get feature visibility settings for all users"""
+    conn = get_db_connection()
+    
+    # Get all users
+    users = conn.execute('''
+        SELECT id, username, email, full_name, is_admin
+        FROM users
+        ORDER BY username
+    ''').fetchall()
+    
+    # Define all available features
+    all_features = ['shopping', 'chores', 'tracker', 'bills', 'budget']
+    
+    result = []
+    for user in users:
+        user_dict = dict(user)
+        
+        # Get this user's feature settings
+        settings = conn.execute('''
+            SELECT feature_name, is_visible FROM feature_visibility
+            WHERE user_id = ?
+        ''', (user['id'],)).fetchall()
+        
+        # Build features dict with defaults
+        features = {feature: True for feature in all_features}
+        
+        for setting in settings:
+            features[setting['feature_name']] = bool(setting['is_visible'])
+        
+        user_dict['features'] = features
+        result.append(user_dict)
+    
+    conn.close()
+    return result
 
 def create_or_update_local_user(user_info):
     """Create or update a local user (non-OIDC)"""

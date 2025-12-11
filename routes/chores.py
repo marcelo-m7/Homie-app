@@ -2,7 +2,7 @@
 Chores routes for Homie Flask application
 """
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
-from authentication import login_required, api_auth_required
+from authentication import login_required, api_auth_required, feature_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
 import logging
@@ -13,6 +13,7 @@ chores_bp = Blueprint('chores', __name__)
 
 @chores_bp.route('/chores')
 @login_required
+@feature_required('chores')
 def chores_list():
     """Display the chores page"""
     conn = get_db_connection()
@@ -45,6 +46,7 @@ def chores_list():
 
 @chores_bp.route('/chores/add', methods=['POST'])
 @login_required
+@feature_required('chores')
 def add_chore():
     """Add a new chore via form submission"""
     try:
@@ -94,6 +96,7 @@ def add_chore():
 @chores_bp.route('/api/chores/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
+@feature_required('chores')
 def add_chore_api():
     """Add a new chore via API"""
     try:
@@ -141,6 +144,7 @@ def add_chore_api():
 
 @chores_bp.route('/chores/complete', methods=['POST'])
 @login_required
+@feature_required('chores')
 def complete_chore():
     """Complete a chore via form submission"""
     try:
@@ -185,6 +189,7 @@ def complete_chore():
 
 @chores_bp.route('/chores/delete', methods=['POST'])
 @login_required
+@feature_required('chores')
 def delete_chore():
     """Delete a chore via form submission"""
     try:
@@ -226,7 +231,8 @@ def delete_chore():
 
 @chores_bp.route('/api/chores/toggle/<int:chore_id>', methods=['POST'])
 @api_auth_required
-@csrf_protect  
+@csrf_protect
+@feature_required('chores')
 def toggle_chore(chore_id):
     """Toggle completion status of a chore"""
     try:
@@ -272,7 +278,8 @@ def toggle_chore(chore_id):
 @chores_bp.route('/api/chores/delete/<int:chore_id>', methods=['DELETE'])
 @api_auth_required
 @csrf_protect
-def api_delete_chore(chore_id):
+@feature_required('chores')
+def delete_chore_api(chore_id):
     """Delete a chore"""
     try:
         conn = get_db_connection()

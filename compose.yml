@@ -33,6 +33,9 @@ services:
       # Allowed groups from OIDC provider (comma-separated list)
       - ALLOWED_GROUPS=family,admin,users
       
+      # Admin email addresses (comma-separated list of users who can manage feature visibility)
+      # - ADMIN_EMAILS=admin@example.com
+      
       # ===== Local Users Configuration (when OIDC is disabled) =====
       # Local users list (simple names or full format username:email:Full Name)
       # - USERS=Emma,Cam,Alex

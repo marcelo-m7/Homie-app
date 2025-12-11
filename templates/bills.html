@@ -252,6 +252,7 @@
             <!-- Modal Body -->
             <div class="p-6">
                 <form id="editBillForm" method="POST" action="/edit_bill" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" id="editBillId" name="bill_id">
                     <div>
                         <label for="editBillName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

@@ -126,8 +126,15 @@ def load_access_control():
     """Load access control configuration"""
     config = {
         'allowed_emails': [],
-        'allowed_groups': []
+        'allowed_groups': [],
+        'admin_emails': []
     }
+    
+    # Load admin emails
+    admin_emails_str = os.getenv('ADMIN_EMAILS', '')
+    if admin_emails_str:
+        config['admin_emails'] = [email.strip().lower() for email in admin_emails_str.split(',')]
+        logger.info(f"Access control: Using ADMIN_EMAILS with {len(config['admin_emails'])} admin emails")
     
     # Load allowed groups from environment variables (takes precedence)
     allowed_groups_str = os.getenv('ALLOWED_GROUPS', '')

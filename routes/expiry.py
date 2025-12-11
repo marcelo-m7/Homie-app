@@ -2,7 +2,7 @@
 Expiry tracker routes for Homie Flask application
 """
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
-from authentication import login_required, api_auth_required
+from authentication import login_required, api_auth_required, feature_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
 from datetime import datetime, date, timedelta
@@ -14,6 +14,7 @@ expiry_bp = Blueprint('expiry', __name__)
 
 @expiry_bp.route('/expiry')
 @login_required
+@feature_required('tracker')
 def expiry_list():
     """Display the expiry tracker page"""
     conn = get_db_connection()
@@ -38,6 +39,7 @@ def expiry_list():
 
 @expiry_bp.route('/expiry/add', methods=['POST'])
 @login_required
+@feature_required('tracker')
 def add_expiry():
     """Add a new expiry item via form submission"""
     try:
@@ -78,7 +80,8 @@ def add_expiry():
 @expiry_bp.route('/api/expiry/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
-def add_expiry_api():
+@feature_required('tracker')
+def add_expiry_item_api():
     """Add a new expiry item via API"""
     try:
         data = request.get_json()
@@ -119,6 +122,7 @@ def add_expiry_api():
 
 @expiry_bp.route('/expiry/delete', methods=['POST'])
 @login_required
+@feature_required('tracker')
 def delete_expiry():
     """Delete an expiry item via form submission"""
     try:
@@ -161,6 +165,7 @@ def delete_expiry():
 @expiry_bp.route('/api/expiry/delete/<int:item_id>', methods=['DELETE'])
 @api_auth_required
 @csrf_protect
+@feature_required('tracker')
 def delete_expiry_item_api(item_id):
     """Delete an expiry item via API"""
     try:

@@ -2,7 +2,7 @@
 Bills routes for Homie Flask application
 """
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
-from authentication import login_required, api_auth_required
+from authentication import login_required, api_auth_required, feature_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
 from datetime import datetime
@@ -15,6 +15,7 @@ bills_bp = Blueprint('bills', __name__)
 
 @bills_bp.route('/bills')
 @login_required
+@feature_required('bills')
 def bills_list():
     """Display the bills page - unpaid bills"""
     # Process any recurring bills that need renewal
@@ -57,6 +58,7 @@ def bills_list():
 
 @bills_bp.route('/bills/paid')
 @login_required
+@feature_required('bills')
 def paid_bills_list():
     """Display all paid bills"""
     conn = get_db_connection()
@@ -96,6 +98,7 @@ def paid_bills_list():
 
 @bills_bp.route('/bills/budget')
 @login_required
+@feature_required('budget')
 def budget_dashboard():
     """Display budget analytics dashboard"""
     analytics = get_budget_analytics()
@@ -108,6 +111,7 @@ def budget_dashboard():
 
 @bills_bp.route('/bills/add', methods=['POST'])
 @login_required
+@feature_required('bills')
 def add_bill():
     """Add a new bill via form submission"""
     try:
@@ -167,9 +171,71 @@ def add_bill():
         flash('Failed to add bill', 'error')
         return redirect(url_for('bills.bills_list'))
 
+@bills_bp.route('/edit_bill', methods=['POST'])
+@login_required
+@csrf_protect
+@feature_required('bills')
+def edit_bill():
+    """Edit an existing bill via form submission"""
+    try:
+        bill_id = request.form.get('bill_id')
+        bill_name = sanitize_input(request.form.get('bill_name', '').strip())
+        amount = request.form.get('amount')
+        due_day = request.form.get('due_day')
+        
+        if not all([bill_id, bill_name, amount, due_day]):
+            flash('All fields are required', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        try:
+            bill_id = int(bill_id)
+            amount = float(amount)
+            due_day = int(due_day)
+        except (ValueError, TypeError):
+            flash('Invalid data provided', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        if not (1 <= due_day <= 31):
+            flash('Due day must be between 1 and 31', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        if amount < 0:
+            flash('Amount must be positive', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        conn = get_db_connection()
+        
+        # Check if bill exists
+        bill = conn.execute('SELECT * FROM bills WHERE id = ?', (bill_id,)).fetchone()
+        if not bill:
+            conn.close()
+            flash('Bill not found', 'error')
+            return redirect(url_for('bills.bills_list'))
+        
+        # Update the bill
+        conn.execute('''
+            UPDATE bills 
+            SET bill_name = ?, amount = ?, due_day = ?
+            WHERE id = ?
+        ''', (bill_name, amount, due_day, bill_id))
+        
+        conn.commit()
+        conn.close()
+        
+        user_id = session['user']['id']
+        logger.info(f"User {user_id} updated bill {bill_id}")
+        flash('Bill updated successfully', 'success')
+        return redirect(url_for('bills.bills_list'))
+        
+    except Exception as e:
+        logger.error(f"Error updating bill: {e}")
+        flash('Failed to update bill', 'error')
+        return redirect(url_for('bills.bills_list'))
+
 @bills_bp.route('/api/bills/pay/<int:bill_id>', methods=['POST'])
 @api_auth_required
 @csrf_protect
+@feature_required('bills')
 def pay_bill(bill_id):
     """Mark a bill as paid"""
     try:
@@ -188,6 +254,7 @@ def pay_bill(bill_id):
 @bills_bp.route('/api/bills/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
+@feature_required('bills')
 def add_bill_api():
     """Add a new bill via API"""
     try:
@@ -237,7 +304,8 @@ def add_bill_api():
 @bills_bp.route('/api/bills/delete/<int:bill_id>', methods=['DELETE'])
 @api_auth_required
 @csrf_protect
-def delete_bill(bill_id):
+@feature_required('bills')
+def delete_bill_api(bill_id):
     """Delete a bill"""
     try:
         conn = get_db_connection()
@@ -268,6 +336,7 @@ def delete_bill(bill_id):
 
 @bills_bp.route('/api/budget/categories', methods=['GET'])
 @api_auth_required
+@feature_required('budget')
 def get_budget_categories():
     """Get all budget categories"""
     try:
@@ -284,6 +353,7 @@ def get_budget_categories():
 @bills_bp.route('/api/budget/categories/<int:category_id>', methods=['PUT'])
 @api_auth_required
 @csrf_protect
+@feature_required('budget')
 def update_budget_category(category_id):
     """Update a budget category limit"""
     try:
@@ -363,7 +433,8 @@ def add_category():
 @bills_bp.route('/api/categories/<int:category_id>', methods=['PUT'])
 @api_auth_required
 @csrf_protect
-def edit_category(category_id):
+@feature_required('budget')
+def update_category(category_id):
     """Edit a bill category name"""
     try:
         data = request.get_json()
@@ -410,6 +481,7 @@ def edit_category(category_id):
 @bills_bp.route('/api/categories/<int:category_id>', methods=['DELETE'])
 @api_auth_required
 @csrf_protect
+@feature_required('budget')
 def delete_category(category_id):
     """Delete a bill category"""
     try:

@@ -160,6 +160,31 @@ def api_auth_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def feature_required(feature_name):
+    """Decorator to require a specific feature to be enabled for the user"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user' not in session:
+                if is_oidc_enabled():
+                    return redirect(url_for('login'))
+                else:
+                    return redirect(url_for('local_login'))
+            
+            # Import here to avoid circular imports
+            from database import get_user_feature_visibility
+            
+            user_id = session['user']['id']
+            
+            # Check if user has access to this feature
+            if not get_user_feature_visibility(user_id, feature_name):
+                logger.warning(f"User {user_id} attempted to access disabled feature: {feature_name}")
+                return redirect(url_for('unauthorized'))
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 def validate_redirect_url(url, allowed_domains):
     """Validate that redirect URL is safe"""
     if not url:

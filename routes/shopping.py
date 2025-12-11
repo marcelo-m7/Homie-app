@@ -2,7 +2,7 @@
 Shopping list routes for Homie Flask application
 """
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, flash
-from authentication import login_required, api_auth_required
+from authentication import login_required, api_auth_required, feature_required
 from database import get_db_connection
 from security import csrf_protect, validate_ownership, sanitize_input
 import logging
@@ -13,6 +13,7 @@ shopping_bp = Blueprint('shopping', __name__)
 
 @shopping_bp.route('/shopping')
 @login_required
+@feature_required('shopping')
 def shopping_list():
     """Display the shopping list page"""
     conn = get_db_connection()
@@ -31,6 +32,7 @@ def shopping_list():
 
 @shopping_bp.route('/shopping/add', methods=['POST'])
 @login_required
+@feature_required('shopping')
 def add_shopping_item():
     """Add a new shopping item via form submission"""
     try:
@@ -65,6 +67,7 @@ def add_shopping_item():
 @shopping_bp.route('/api/shopping/add', methods=['POST'])
 @api_auth_required
 @csrf_protect
+@feature_required('shopping')
 def add_shopping_item_api():
     """Add a new shopping item via API"""
     try:
@@ -96,6 +99,7 @@ def add_shopping_item_api():
 @shopping_bp.route('/api/shopping/toggle/<int:item_id>', methods=['POST'])
 @api_auth_required  
 @csrf_protect
+@feature_required('shopping')
 def toggle_shopping_item(item_id):
     """Toggle completion status of a shopping item"""
     try:
@@ -141,6 +145,7 @@ def toggle_shopping_item(item_id):
 
 @shopping_bp.route('/shopping/delete', methods=['POST'])
 @login_required
+@feature_required('shopping')
 def delete_shopping_item():
     """Delete a shopping item via form submission"""
     try:
@@ -182,6 +187,7 @@ def delete_shopping_item():
 
 @shopping_bp.route('/shopping/toggle', methods=['POST'])
 @login_required
+@feature_required('shopping')
 def toggle_shopping_item_form():
     """Toggle shopping item completion via form submission"""
     try:
@@ -240,6 +246,7 @@ def toggle_shopping_item_form():
 @shopping_bp.route('/api/shopping/delete/<int:item_id>', methods=['DELETE'])
 @api_auth_required
 @csrf_protect
+@feature_required('shopping')
 def delete_shopping_item_api(item_id):
     """Delete a shopping item via API"""
     try:

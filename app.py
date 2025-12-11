@@ -62,6 +62,27 @@ def create_app():
     def inject_currency():
         return dict(currency=get_currency_symbol())
     
+    # Template context processor for user features
+    @app.context_processor
+    def inject_user_features():
+        """Inject user's feature visibility settings into templates"""
+        if 'user' in session:
+            from database import get_all_user_features
+            try:
+                user_features = get_all_user_features(session['user']['id'])
+                return dict(user_features=user_features)
+            except Exception as e:
+                logger.error(f"Error loading user features: {e}")
+                # Return all features visible as fallback
+                return dict(user_features={
+                    'shopping': True,
+                    'chores': True,
+                    'tracker': True,
+                    'bills': True,
+                    'budget': True
+                })
+        return dict(user_features={})
+    
     # Add custom Jinja filters
     @app.template_filter('title_case')
     def title_case_filter(text):
@@ -351,9 +372,11 @@ def create_app():
     from routes.chores import chores_bp
     from routes.bills import bills_bp 
     from routes.expiry import expiry_bp
+    from routes.admin import admin_bp
     app.register_blueprint(chores_bp)
     app.register_blueprint(bills_bp)
     app.register_blueprint(expiry_bp)
+    app.register_blueprint(admin_bp)
     
     return app
 

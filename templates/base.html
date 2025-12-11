@@ -207,21 +207,31 @@
                                 <a href="{{ url_for('index') }}" class="nav-link text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
                                 </a>
+                                {% if user_features.get('shopping', True) %}
                                 <a href="{{ url_for('shopping.shopping_list') }}" class="nav-link text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-shopping-cart mr-1"></i>Shopping
                                 </a>
+                                {% endif %}
+                                {% if user_features.get('chores', True) %}
                                 <a href="{{ url_for('chores.chores_list') }}" class="nav-link text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-tasks mr-1"></i>Chores
                                 </a>
+                                {% endif %}
+                                {% if user_features.get('tracker', True) %}
                                 <a href="{{ url_for('expiry.expiry_list') }}" class="nav-link text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-calendar-alt mr-1"></i>Tracker
                                 </a>
+                                {% endif %}
+                                {% if user_features.get('bills', True) %}
                                 <a href="{{ url_for('bills.bills_list') }}" class="nav-link text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-receipt mr-1"></i>Bills
                                 </a>
+                                {% endif %}
+                                {% if user_features.get('budget', True) %}
                                 <a href="{{ url_for('bills.budget_dashboard') }}" class="nav-link text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium">
                                     <i class="fas fa-chart-pie mr-1"></i>Budget
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -234,7 +244,7 @@
                                 <i class="fas fa-chevron-down ml-1"></i>
                             </button>
                             <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 theme-transition">
-                                <button id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-md flex items-center justify-between">
+                                <button id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between">
                                     <span class="flex items-center">
                                         <i class="fas fa-adjust mr-2"></i>
                                         <span>Theme</span>
@@ -244,6 +254,11 @@
                                         <i class="fas fa-sun light-icon hidden"></i>
                                     </span>
                                 </button>
+                                {% if session['user']['is_admin'] %}
+                                <a href="{{ url_for('admin.admin_features') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <i class="fas fa-user-shield mr-2"></i>Admin
+                                </a>
+                                {% endif %}
                                 <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-md">
                                     <i class="fas fa-sign-out-alt mr-2"></i>Logout
                                 </a>
@@ -264,21 +279,31 @@
                     <a href="{{ url_for('index') }}" class="block px-3 py-2 text-base font-medium text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400">
                         <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                     </a>
+                    {% if user_features.get('shopping', True) %}
                     <a href="{{ url_for('shopping.shopping_list') }}" class="block px-3 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                         <i class="fas fa-shopping-cart mr-2"></i>Shopping
                     </a>
+                    {% endif %}
+                    {% if user_features.get('chores', True) %}
                     <a href="{{ url_for('chores.chores_list') }}" class="block px-3 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                         <i class="fas fa-tasks mr-2"></i>Chores
                     </a>
+                    {% endif %}
+                    {% if user_features.get('tracker', True) %}
                     <a href="{{ url_for('expiry.expiry_list') }}" class="block px-3 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                         <i class="fas fa-calendar-alt mr-2"></i>Tracker
                     </a>
+                    {% endif %}
+                    {% if user_features.get('bills', True) %}
                     <a href="{{ url_for('bills.bills_list') }}" class="block px-3 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                         <i class="fas fa-receipt mr-2"></i>Bills
                     </a>
+                    {% endif %}
+                    {% if user_features.get('budget', True) %}
                     <a href="{{ url_for('bills.budget_dashboard') }}" class="block px-3 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                         <i class="fas fa-chart-pie mr-2"></i>Budget
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </nav>
