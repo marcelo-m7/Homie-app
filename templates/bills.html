@@ -1,8 +1,5 @@
-{% extends "base.html" %}
-
-{% block title %}Bills - Homie{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Bills - Homie{% endblock %} {% block
+content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Simple Header -->
     <div class="mb-8 mt-4">
@@ -18,16 +15,26 @@
     <div class="mb-8">
         <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="-mb-px flex space-x-8">
-                <a href="{{ url_for('bills.bills_list') }}" 
-                   class="{% if view == 'unpaid' %}border-gray-500 text-gray-600 dark:text-gray-300{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <a
+                    href="{{ url_for('bills.bills_list') }}"
+                    class="{% if view == 'unpaid' %}border-gray-500 text-gray-600 dark:text-gray-300{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
                     <i class="fas fa-clock mr-2"></i>Unpaid Bills
                 </a>
-                <a href="{{ url_for('bills.paid_bills_list') }}" 
-                   class="{% if view == 'paid' %}border-gray-500 text-gray-600 dark:text-gray-300{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <a
+                    href="{{ url_for('bills.paid_bills_list') }}"
+                    class="{% if view == 'paid' %}border-gray-500 text-gray-600 dark:text-gray-300{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
                     <i class="fas fa-check-circle mr-2"></i>Paid Bills
                 </a>
-                <a href="#" onclick="showCategoriesModal(); return false;" 
-                   class="border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                <a
+                    href="#"
+                    onclick="
+                        showCategoriesModal();
+                        return false;
+                    "
+                    class="border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                >
                     <i class="fas fa-tags mr-2"></i>Manage Categories
                 </a>
             </nav>
@@ -35,72 +42,131 @@
     </div>
 
     <!-- Monthly Total Card -->
-    <div class="bg-gradient-to-r from-gray-300 to-gray-400 text-white rounded-xl p-8 mb-8 shadow-lg">
+    <div
+        class="bg-gradient-to-r from-gray-300 to-gray-400 text-white rounded-xl p-8 mb-8 shadow-lg"
+    >
         <div class="text-center">
-            <h2 class="text-2xl font-bold mb-2">{% if view == 'paid' %}Total Paid{% else %}Monthly Total{% endif %}</h2>
-            <p class="text-5xl font-bold">{{ currency }}{{ "%.2f"|format(monthly_total or 0) }}</p>
-            <p class="text-grey-100 mt-2">{{ bills|length }} bill{{ 's' if bills|length != 1 else '' }} {% if view == 'paid' %}paid{% else %}tracked{% endif %}</p>
+            <h2 class="text-2xl font-bold mb-2">
+                {% if view == 'paid' %}Total Paid{% else %}Monthly Total{% endif
+                %}
+            </h2>
+            <p class="text-5xl font-bold">
+                {{ currency }}{{ "%.2f"|format(monthly_total or 0) }}
+            </p>
+            <p class="text-grey-100 mt-2">
+                {{ bills|length }} bill{{ 's' if bills|length != 1 else '' }} {%
+                if view == 'paid' %}paid{% else %}tracked{% endif %}
+            </p>
         </div>
     </div>
 
     {% if view == 'unpaid' %}
     <!-- Add Bill Form -->
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 mb-8">
+    <div
+        class="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 mb-8"
+    >
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                <i class="fas fa-plus-circle mr-2 text-gray-400"></i>Add New Bill
+                <i class="fas fa-plus-circle mr-2 text-gray-400"></i>Add New
+                Bill
             </h3>
         </div>
         <div class="p-6">
-            <form method="POST" action="{{ url_for('bills.add_bill') }}" class="space-y-4">
+            <form
+                method="POST"
+                action="{{ url_for('bills.add_bill') }}"
+                class="space-y-4"
+            >
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label for="bill_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="bill_name"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Bill Name *
                         </label>
-                        <input type="text" name="bill_name" id="bill_name" required
-                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
-                               placeholder="e.g., Electricity, Gas, Netflix">
+                        <input
+                            type="text"
+                            name="bill_name"
+                            id="bill_name"
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                            placeholder="e.g., Electricity, Gas, Netflix"
+                        />
                     </div>
                     <div>
-                        <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="amount"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Amount ({{ currency }}) *
                         </label>
-                        <input type="number" name="amount" id="amount" step="0.01" min="0" required
-                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
-                               placeholder="0.00">
+                        <input
+                            type="number"
+                            name="amount"
+                            id="amount"
+                            step="0.01"
+                            min="0"
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                            placeholder="0.00"
+                        />
                     </div>
                     <div>
-                        <label for="due_day" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="due_day"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Due Day (optional)
                         </label>
-                        <select name="due_day" id="due_day"
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
+                        <select
+                            name="due_day"
+                            id="due_day"
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                        >
                             <option value="">No specific day</option>
                             {% for day in range(1, 32) %}
-                            <option value="{{ day }}">{{ day }}{{ 'st' if day == 1 or day == 21 or day == 31 else ('nd' if day == 2 or day == 22 else ('rd' if day == 3 or day == 23 else 'th')) }}</option>
+                            <option value="{{ day }}">
+                                {{ day }}{{ 'st' if day == 1 or day == 21 or day
+                                == 31 else ('nd' if day == 2 or day == 22 else
+                                ('rd' if day == 3 or day == 23 else 'th')) }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="category"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Category
                         </label>
-                        <select name="category" id="category"
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
+                        <select
+                            name="category"
+                            id="category"
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                        >
                             {% for cat in categories %}
-                            <option value="{{ cat.name }}">{{ cat.name }}</option>
+                            <option value="{{ cat.name }}">
+                                {{ cat.name }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label for="recurrence_pattern" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="recurrence_pattern"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Recurrence
                         </label>
-                        <select name="recurrence_pattern" id="recurrence_pattern"
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
+                        <select
+                            name="recurrence_pattern"
+                            id="recurrence_pattern"
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                        >
                             <option value="">One-time bill</option>
                             <option value="monthly" selected>Monthly</option>
                             <option value="weekly">Weekly</option>
@@ -109,8 +175,10 @@
                     </div>
                 </div>
                 <div class="flex justify-end pt-4">
-                    <button type="submit"
-                            class="px-6 py-3 bg-gray-400 hover:bg-gray-300 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <button
+                        type="submit"
+                        class="px-6 py-3 bg-gray-400 hover:bg-gray-300 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
                         <i class="fas fa-plus mr-2"></i>Add Bill
                     </button>
                 </div>
@@ -121,48 +189,78 @@
 
     <!-- Bills List -->
     {% if bills %}
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">
+    <div
+        class="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700"
+    >
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
                 {% if view == 'paid' %}Paid Bills{% else %}Your Bills{% endif %}
             </h3>
         </div>
         <div class="divide-y divide-gray-200 dark:divide-gray-700">
-            {% for bill in bills|sort(attribute='paid_date' if view == 'paid' else 'due_day', reverse=True if view == 'paid' else False) %}
-            <div class="item-row p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            {% for bill in bills|sort(attribute='paid_date' if view == 'paid'
+            else 'due_day', reverse=True if view == 'paid' else False) %}
+            <div
+                class="item-row p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-gray-300 to-gray-400 rounded-xl flex items-center justify-center shadow-lg">
+                        <div
+                            class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-gray-300 to-gray-400 rounded-xl flex items-center justify-center shadow-lg"
+                        >
                             <i class="fas fa-receipt text-white"></i>
                         </div>
                         <div>
                             <div class="flex items-center space-x-2 mb-1">
-                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <h4
+                                    class="text-lg font-semibold text-gray-900 dark:text-white"
+                                >
                                     {{ bill.bill_name }}
                                 </h4>
                                 {% if bill.is_recurring %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                                    <i class="fas fa-sync-alt mr-1"></i>{{ bill.recurrence_pattern|default('monthly') }}
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                                >
+                                    <i class="fas fa-sync-alt mr-1"></i>{{
+                                    bill.recurrence_pattern|default('monthly')
+                                    }}
                                 </span>
                                 {% endif %}
                             </div>
                             <div class="flex items-center space-x-2">
                                 {% if view == 'paid' %}
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    <i class="fas fa-check-circle text-green-500 mr-1"></i>Paid on {{ bill.paid_date }}
+                                <p
+                                    class="text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    <i
+                                        class="fas fa-check-circle text-green-500 mr-1"
+                                    ></i
+                                    >Paid on
+                                    <span data-utc-time="{{ bill.paid_date }}"
+                                        >{{ bill.paid_date }}</span
+                                    >
                                 </p>
                                 {% if bill.paid_by_name %}
-                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                <span
+                                    class="text-xs text-gray-500 dark:text-gray-400"
+                                >
                                     by {{ bill.paid_by_name|title_case }}
                                 </span>
-                                {% endif %}
-                                {% else %}
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    Due: {{ bill.due_day }}{{ 'st' if bill.due_day == 1 or bill.due_day == 21 or bill.due_day == 31 else ('nd' if bill.due_day == 2 or bill.due_day == 22 else ('rd' if bill.due_day == 3 or bill.due_day == 23 else 'th')) }} of each month
+                                {% endif %} {% else %}
+                                <p
+                                    class="text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    Due: {{ bill.due_day }}{{ 'st' if
+                                    bill.due_day == 1 or bill.due_day == 21 or
+                                    bill.due_day == 31 else ('nd' if
+                                    bill.due_day == 2 or bill.due_day == 22 else
+                                    ('rd' if bill.due_day == 3 or bill.due_day
+                                    == 23 else 'th')) }} of each month
                                 </p>
-                                {% endif %}
-                                {% if bill.category %}
-                                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                {% endif %} {% if bill.category %}
+                                <span
+                                    class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                >
                                     {{ bill.category }}
                                 </span>
                                 {% endif %}
@@ -171,40 +269,62 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                            <p
+                                class="text-2xl font-bold text-gray-900 dark:text-white"
+                            >
                                 {{ currency }}{{ "%.2f"|format(bill.amount) }}
                             </p>
-                            {% if bill.is_recurring and bill.recurrence_pattern == 'weekly' %}
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                ≈ {{ currency }}{{ "%.2f"|format(bill.amount * 4) }}/mo
+                            {% if bill.is_recurring and bill.recurrence_pattern
+                            == 'weekly' %}
+                            <p
+                                class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                            >
+                                ≈ {{ currency }}{{ "%.2f"|format(bill.amount *
+                                4) }}/mo
                             </p>
-                            {% elif bill.is_recurring and bill.recurrence_pattern == 'yearly' %}
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                ≈ {{ currency }}{{ "%.2f"|format(bill.amount / 12) }}/mo
+                            {% elif bill.is_recurring and
+                            bill.recurrence_pattern == 'yearly' %}
+                            <p
+                                class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                            >
+                                ≈ {{ currency }}{{ "%.2f"|format(bill.amount /
+                                12) }}/mo
                             </p>
                             {% endif %}
                         </div>
                         <!-- Actions Dropdown -->
                         <div class="relative action-dropdown">
-                            <button onclick="toggleActionMenu('bill-menu-{{ bill.id }}')"
-                                    class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <button
+                                onclick="toggleActionMenu('bill-menu-{{ bill.id }}')"
+                                class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            >
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
-                            <div id="bill-menu-{{ bill.id }}" class="action-menu hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 z-20 border border-gray-200 dark:border-gray-600">
-                                {% if view == 'unpaid' %}
-                                {% if not bill.is_recurring %}
-                                <button onclick="payBill({{ bill.id }}, this)"
-                                        class="block w-full text-left px-4 py-3 text-sm text-green-600 dark:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg transition-colors">
-                                    <i class="fas fa-check-circle mr-2"></i>Mark as Paid
+                            <div
+                                id="bill-menu-{{ bill.id }}"
+                                class="action-menu hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 z-20 border border-gray-200 dark:border-gray-600"
+                            >
+                                {% if view == 'unpaid' %} {% if not
+                                bill.is_recurring %}
+                                <button
+                                    onclick="payBill({{ bill.id }}, this)"
+                                    class="block w-full text-left px-4 py-3 text-sm text-green-600 dark:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg transition-colors"
+                                >
+                                    <i class="fas fa-check-circle mr-2"></i>Mark
+                                    as Paid
                                 </button>
                                 {% endif %}
-                                <button onclick="editBill({{ bill.id }}, '{{ bill.bill_name }}', {{ bill.amount }}, {{ bill.due_day }})"
-                                        class="block w-full text-left px-4 py-3 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {% if not bill.is_recurring %}border-t border-gray-200 dark:border-gray-600{% else %}rounded-t-lg{% endif %}">
+                                <button
+                                    onclick="editBill({{ bill.id }}, '{{ bill.bill_name }}', {{ bill.amount }}, {{ bill.due_day }})"
+                                    class="block w-full text-left px-4 py-3 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {% if not bill.is_recurring %}border-t border-gray-200 dark:border-gray-600{% else %}rounded-t-lg{% endif %}"
+                                >
                                     <i class="fas fa-edit mr-2"></i>Edit Bill
                                 </button>
                                 {% endif %}
-                                <button onclick="deleteBill({{ bill.id }}, this)"
-                                        class="block w-full text-left px-4 py-3 text-sm text-gray-400 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 {% if view == 'unpaid' %}border-t border-gray-200 dark:border-gray-600{% endif %} rounded-b-lg transition-colors">
+                                <button
+                                    onclick="deleteBill({{ bill.id }}, this)"
+                                    class="block w-full text-left px-4 py-3 text-sm text-gray-400 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 {% if view == 'unpaid' %}border-t border-gray-200 dark:border-gray-600{% endif %} rounded-b-lg transition-colors"
+                                >
                                     <i class="fas fa-trash mr-2"></i>Delete Bill
                                 </button>
                             </div>
@@ -218,7 +338,9 @@
     {% else %}
     <!-- Empty State -->
     <div class="text-center py-16">
-        <div class="bg-gray-100 dark:bg-gray-800 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+        <div
+            class="bg-gray-100 dark:bg-gray-800 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6"
+        >
             <i class="fas fa-receipt text-4xl text-gray-400"></i>
         </div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -227,8 +349,10 @@
         <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
             Start tracking your monthly bills by adding your first bill above.
         </p>
-        <button onclick="document.getElementById('bill_name').focus()" 
-                class="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-medium rounded-lg transition-colors">
+        <button
+            onclick="document.getElementById('bill_name').focus()"
+            class="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-medium rounded-lg transition-colors"
+        >
             <i class="fas fa-plus mr-2"></i>Add Your First Bill
         </button>
     </div>
@@ -236,58 +360,111 @@
 </div>
 
 <!-- Simple Edit Bill Modal -->
-<div id="editBillModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-    <div class="relative mx-auto p-0 border-0 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-gray-800 m-4">
+<div
+    id="editBillModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center"
+>
+    <div
+        class="relative mx-auto p-0 border-0 w-full max-w-lg shadow-2xl rounded-xl bg-white dark:bg-gray-800 m-4"
+    >
         <div class="relative">
             <!-- Modal Header -->
-            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-t-xl">
+            <div
+                class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-t-xl"
+            >
                 <h3 class="text-xl font-semibold">
                     <i class="fas fa-edit mr-2"></i>Edit Bill
                 </h3>
-                <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors">
+                <button
+                    onclick="closeEditModal()"
+                    class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors"
+                >
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            
+
             <!-- Modal Body -->
             <div class="p-6">
-                <form id="editBillForm" method="POST" action="/edit_bill" class="space-y-4">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" id="editBillId" name="bill_id">
+                <form
+                    id="editBillForm"
+                    method="POST"
+                    action="/edit_bill"
+                    class="space-y-4"
+                >
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token() }}"
+                    />
+                    <input type="hidden" id="editBillId" name="bill_id" />
                     <div>
-                        <label for="editBillName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="editBillName"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Bill Name *
                         </label>
-                        <input type="text" id="editBillName" name="bill_name" required
-                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
+                        <input
+                            type="text"
+                            id="editBillName"
+                            name="bill_name"
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                        />
                     </div>
                     <div>
-                        <label for="editAmount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="editAmount"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Amount ({{ currency }}) *
                         </label>
-                        <input type="number" id="editAmount" name="amount" step="0.01" min="0" required
-                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
+                        <input
+                            type="number"
+                            id="editAmount"
+                            name="amount"
+                            step="0.01"
+                            min="0"
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                        />
                     </div>
                     <div>
-                        <label for="editDueDay" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label
+                            for="editDueDay"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
                             Due Day of Month *
                         </label>
-                        <select id="editDueDay" name="due_day" required
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all">
+                        <select
+                            id="editDueDay"
+                            name="due_day"
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all"
+                        >
                             {% for day in range(1, 32) %}
-                            <option value="{{ day }}">{{ day }}{{ 'st' if day == 1 or day == 21 or day == 31 else ('nd' if day == 2 or day == 22 else ('rd' if day == 3 or day == 23 else 'th')) }}</option>
+                            <option value="{{ day }}">
+                                {{ day }}{{ 'st' if day == 1 or day == 21 or day
+                                == 31 else ('nd' if day == 2 or day == 22 else
+                                ('rd' if day == 3 or day == 23 else 'th')) }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <!-- Modal Actions -->
                     <div class="flex justify-end space-x-3 pt-6">
-                        <button type="button" onclick="closeEditModal()"
-                                class="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors font-medium">
+                        <button
+                            type="button"
+                            onclick="closeEditModal()"
+                            class="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors font-medium"
+                        >
                             Cancel
                         </button>
-                        <button type="submit"
-                                class="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-lg transition-colors font-medium shadow-lg">
+                        <button
+                            type="submit"
+                            class="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-lg transition-colors font-medium shadow-lg"
+                        >
                             <i class="fas fa-save mr-2"></i>Update Bill
                         </button>
                     </div>
@@ -298,60 +475,103 @@
 </div>
 
 <!-- Categories Management Modal -->
-<div id="categoriesModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-    <div class="relative mx-auto p-0 border-0 w-full max-w-2xl shadow-2xl rounded-xl bg-white dark:bg-gray-800 m-4">
+<div
+    id="categoriesModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center"
+>
+    <div
+        class="relative mx-auto p-0 border-0 w-full max-w-2xl shadow-2xl rounded-xl bg-white dark:bg-gray-800 m-4"
+    >
         <div class="relative">
             <!-- Modal Header -->
-            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-t-xl">
+            <div
+                class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-t-xl"
+            >
                 <h3 class="text-xl font-semibold">
                     <i class="fas fa-tags mr-2"></i>Manage Categories
                 </h3>
-                <button onclick="closeCategoriesModal()" class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors">
+                <button
+                    onclick="closeCategoriesModal()"
+                    class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors"
+                >
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            
+
             <!-- Modal Body -->
             <div class="p-6">
                 <!-- Add New Category -->
                 <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Add New Category</h4>
+                    <h4
+                        class="text-sm font-semibold text-gray-900 dark:text-white mb-3"
+                    >
+                        Add New Category
+                    </h4>
                     <div class="flex gap-3">
-                        <input type="text" id="newCategoryName" placeholder="Category name"
-                               class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                               onkeypress="if(event.key === 'Enter') addCategory()">
-                        <button onclick="addCategory()"
-                                class="px-6 py-2 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-lg transition-colors font-medium">
+                        <input
+                            type="text"
+                            id="newCategoryName"
+                            placeholder="Category name"
+                            class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            onkeypress="
+                                if (event.key === 'Enter') addCategory();
+                            "
+                        />
+                        <button
+                            onclick="addCategory()"
+                            class="px-6 py-2 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white rounded-lg transition-colors font-medium"
+                        >
                             <i class="fas fa-plus mr-2"></i>Add
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Categories List -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                >
+                    <table
+                        class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+                    >
                         <thead class="bg-gray-50 dark:bg-gray-900">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category Name</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                >
+                                    Category Name
+                                </th>
+                                <th
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                >
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
-                        <tbody id="categoriesTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody
+                            id="categoriesTableBody"
+                            class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
+                        >
                             <!-- Categories will be loaded here -->
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="mt-4 text-sm text-gray-500 dark:text-gray-400">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Categories in use by bills cannot be deleted. You can rename them instead.
+                    Categories in use by bills cannot be deleted. You can rename
+                    them instead.
                 </div>
             </div>
-            
+
             <!-- Modal Footer -->
-            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                <button type="button" onclick="closeCategoriesModal()"
-                        class="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors font-medium">
+            <div
+                class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end"
+            >
+                <button
+                    type="button"
+                    onclick="closeCategoriesModal()"
+                    class="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors font-medium"
+                >
                     Close
                 </button>
             </div>
@@ -360,251 +580,266 @@
 </div>
 
 <script>
-// Currency symbol from server
-const CURRENCY = '{{ currency }}';
+    // Currency symbol from server
+    const CURRENCY = "{{ currency }}";
 
-function editBill(billId, billName, amount, dueDay) {
-    document.getElementById('editBillId').value = billId;
-    document.getElementById('editBillName').value = billName;
-    document.getElementById('editAmount').value = amount;
-    document.getElementById('editDueDay').value = dueDay;
-    document.getElementById('editBillModal').classList.remove('hidden');
-}
-
-function closeEditModal() {
-    document.getElementById('editBillModal').classList.add('hidden');
-}
-
-// Close modal when clicking outside
-document.getElementById('editBillModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeEditModal();
+    function editBill(billId, billName, amount, dueDay) {
+        document.getElementById("editBillId").value = billId;
+        document.getElementById("editBillName").value = billName;
+        document.getElementById("editAmount").value = amount;
+        document.getElementById("editDueDay").value = dueDay;
+        document.getElementById("editBillModal").classList.remove("hidden");
     }
-});
 
-document.getElementById('categoriesModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeCategoriesModal();
+    function closeEditModal() {
+        document.getElementById("editBillModal").classList.add("hidden");
     }
-});
 
-// Animate number counting up
-function animateCountUp(element, start, end, duration = 1500) {
-    const startTime = performance.now();
-    const difference = end - start;
-    
-    function updateCount(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing function for smooth animation
-        const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-        const current = start + (difference * easeOutCubic);
-        
-        element.textContent = CURRENCY + current.toFixed(2);
-        
-        if (progress < 1) {
-            requestAnimationFrame(updateCount);
-        }
-    }
-    
-    requestAnimationFrame(updateCount);
-}
-
-// Calculate current total from DOM
-function calculateCurrentTotal() {
-    const billElements = document.querySelectorAll('.item-row');
-    let total = 0;
-    
-    billElements.forEach(row => {
-        const amountText = row.querySelector('.text-2xl.font-bold').textContent;
-        const amount = parseFloat(amountText.replace(CURRENCY, ''));
-        if (!isNaN(amount)) {
-            total += amount;
-        }
-    });
-    
-    return total;
-}
-
-// Update monthly total display
-function updateMonthlyTotal(newTotal = null) {
-    const totalElement = document.querySelector('.text-5xl.font-bold');
-    const countElement = document.querySelector('.text-blue-100');
-    
-    if (!totalElement) return;
-    
-    const currentDisplayed = parseFloat(totalElement.textContent.replace(CURRENCY, '')) || 0;
-    const actualTotal = newTotal !== null ? newTotal : calculateCurrentTotal();
-    const billCount = document.querySelectorAll('.item-row').length;
-    
-    // Animate the count up/down
-    animateCountUp(totalElement, currentDisplayed, actualTotal, 800);
-    
-    // Update bill count
-    setTimeout(() => {
-        countElement.textContent = `${billCount} bill${billCount !== 1 ? 's' : ''} tracked`;
-    }, 400);
-}
-
-// Mark bill as paid
-function payBill(billId, element) {
-    if (confirm('Mark this bill as paid?')) {
-        const billRow = element.closest('.item-row');
-        
-        fetch(`/api/bills/pay/${billId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': '{{ csrf_token() }}'
+    // Close modal when clicking outside
+    document
+        .getElementById("editBillModal")
+        .addEventListener("click", function (e) {
+            if (e.target === this) {
+                closeEditModal();
             }
+        });
+
+    document
+        .getElementById("categoriesModal")
+        .addEventListener("click", function (e) {
+            if (e.target === this) {
+                closeCategoriesModal();
+            }
+        });
+
+    // Animate number counting up
+    function animateCountUp(element, start, end, duration = 1500) {
+        const startTime = performance.now();
+        const difference = end - start;
+
+        function updateCount(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Easing function for smooth animation
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+            const current = start + difference * easeOutCubic;
+
+            element.textContent = CURRENCY + current.toFixed(2);
+
+            if (progress < 1) {
+                requestAnimationFrame(updateCount);
+            }
+        }
+
+        requestAnimationFrame(updateCount);
+    }
+
+    // Calculate current total from DOM
+    function calculateCurrentTotal() {
+        const billElements = document.querySelectorAll(".item-row");
+        let total = 0;
+
+        billElements.forEach((row) => {
+            const amountText = row.querySelector(
+                ".text-2xl.font-bold",
+            ).textContent;
+            const amount = parseFloat(amountText.replace(CURRENCY, ""));
+            if (!isNaN(amount)) {
+                total += amount;
+            }
+        });
+
+        return total;
+    }
+
+    // Update monthly total display
+    function updateMonthlyTotal(newTotal = null) {
+        const totalElement = document.querySelector(".text-5xl.font-bold");
+        const countElement = document.querySelector(".text-blue-100");
+
+        if (!totalElement) return;
+
+        const currentDisplayed =
+            parseFloat(totalElement.textContent.replace(CURRENCY, "")) || 0;
+        const actualTotal =
+            newTotal !== null ? newTotal : calculateCurrentTotal();
+        const billCount = document.querySelectorAll(".item-row").length;
+
+        // Animate the count up/down
+        animateCountUp(totalElement, currentDisplayed, actualTotal, 800);
+
+        // Update bill count
+        setTimeout(() => {
+            countElement.textContent = `${billCount} bill${billCount !== 1 ? "s" : ""} tracked`;
+        }, 400);
+    }
+
+    // Mark bill as paid
+    function payBill(billId, element) {
+        if (confirm("Mark this bill as paid?")) {
+            const billRow = element.closest(".item-row");
+
+            fetch(`/api/bills/pay/${billId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": "{{ csrf_token() }}",
+                },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        // Animate the row removal
+                        billRow.style.transition = "all 0.3s ease";
+                        billRow.style.opacity = "0";
+                        billRow.style.transform = "translateX(100%)";
+
+                        setTimeout(() => {
+                            location.reload(); // Reload to update totals
+                        }, 300);
+                    } else {
+                        alert(data.error || "Error marking bill as paid");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    alert("Error marking bill as paid");
+                });
+        }
+    }
+
+    // Override the deleteItem function for bills to trigger recount
+    function deleteBill(billId, element) {
+        // Get the amount before deletion for smooth animation
+        const billRow = element.closest(".item-row");
+        const amountText = billRow.querySelector(
+            ".text-2xl.font-bold",
+        ).textContent;
+        const deletedAmount = parseFloat(amountText.replace(CURRENCY, ""));
+
+        fetch(`/api/bills/delete/${billId}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": "{{ csrf_token() }}",
+            },
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Animate the row removal
-                billRow.style.transition = 'all 0.3s ease';
-                billRow.style.opacity = '0';
-                billRow.style.transform = 'translateX(100%)';
-                
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success) {
+                    // Animate the row removal
+                    billRow.style.transition = "all 0.3s ease";
+                    billRow.style.opacity = "0";
+                    billRow.style.transform = "translateX(-100%)";
+
+                    setTimeout(() => {
+                        billRow.remove();
+                        // Trigger total recount animation
+                        updateMonthlyTotal();
+
+                        // Show empty state if no bills left
+                        if (
+                            document.querySelectorAll(".item-row").length === 0
+                        ) {
+                            location.reload(); // Reload to show empty state
+                        }
+                    }, 300);
+                } else {
+                    console.error(data.error || "Error deleting bill");
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    }
+
+    // Pay bill function
+    async function payBill(billId, button) {
+        toggleActionMenu(
+            button.closest(".action-dropdown").querySelector(".action-menu").id,
+        );
+
+        try {
+            const response = await fetch(`/api/bills/pay/${billId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": "{{ csrf_token() }}",
+                },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Remove the bill from the list with animation
+                const billRow = button.closest(".item-row");
+                billRow.style.transition = "all 0.3s ease";
+                billRow.style.opacity = "0";
+                billRow.style.transform = "translateX(100%)";
                 setTimeout(() => {
-                    location.reload(); // Reload to update totals
+                    location.reload();
                 }, 300);
             } else {
-                alert(data.error || 'Error marking bill as paid');
+                console.error(data.error || "Failed to mark bill as paid");
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error marking bill as paid');
-        });
+        } catch (error) {
+            console.error("Error:", error);
+        }
     }
-}
 
-// Override the deleteItem function for bills to trigger recount
-function deleteBill(billId, element) {
-    // Get the amount before deletion for smooth animation
-    const billRow = element.closest('.item-row');
-    const amountText = billRow.querySelector('.text-2xl.font-bold').textContent;
-    const deletedAmount = parseFloat(amountText.replace(CURRENCY, ''));
-    
-    fetch(`/api/bills/delete/${billId}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '{{ csrf_token() }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Animate the row removal
-            billRow.style.transition = 'all 0.3s ease';
-            billRow.style.opacity = '0';
-            billRow.style.transform = 'translateX(-100%)';
-            
+    // Simple animations
+    document.addEventListener("DOMContentLoaded", function () {
+        // Animate cards appearing
+        const cards = document.querySelectorAll(".bg-white, .bg-gradient-to-r");
+        cards.forEach((card, index) => {
+            card.style.opacity = "0";
+            card.style.transform = "translateY(20px)";
             setTimeout(() => {
-                billRow.remove();
-                // Trigger total recount animation
-                updateMonthlyTotal();
-                
-                // Show empty state if no bills left
-                if (document.querySelectorAll('.item-row').length === 0) {
-                    location.reload(); // Reload to show empty state
-                }
-            }, 300);
-        } else {
-            console.error(data.error || 'Error deleting bill');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
-// Pay bill function
-async function payBill(billId, button) {
-    
-    toggleActionMenu(button.closest('.action-dropdown').querySelector('.action-menu').id);
-    
-    try {
-        const response = await fetch(`/api/bills/pay/${billId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': '{{ csrf_token() }}'
-            }
+                card.style.transition = "all 0.5s ease";
+                card.style.opacity = "1";
+                card.style.transform = "translateY(0)";
+            }, index * 100);
         });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            // Remove the bill from the list with animation
-            const billRow = button.closest('.item-row');
-            billRow.style.transition = 'all 0.3s ease';
-            billRow.style.opacity = '0';
-            billRow.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                location.reload();
-            }, 300);
-        } else {
-            console.error(data.error || 'Failed to mark bill as paid');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
 
-// Simple animations
-document.addEventListener('DOMContentLoaded', function() {
-    // Animate cards appearing
-    const cards = document.querySelectorAll('.bg-white, .bg-gradient-to-r');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
+        // Animate the monthly total counting up on page load
         setTimeout(() => {
-            card.style.transition = 'all 0.5s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 100);
+            const totalElement = document.querySelector(".text-5xl.font-bold");
+            if (totalElement) {
+                const finalTotal = parseFloat(
+                    totalElement.textContent.replace(CURRENCY, ""),
+                );
+                totalElement.textContent = CURRENCY + "0.00";
+                animateCountUp(totalElement, 0, finalTotal, 1500);
+            }
+        }, 500);
     });
-    
-    // Animate the monthly total counting up on page load
-    setTimeout(() => {
-        const totalElement = document.querySelector('.text-5xl.font-bold');
-        if (totalElement) {
-            const finalTotal = parseFloat(totalElement.textContent.replace(CURRENCY, ''));
-            totalElement.textContent = CURRENCY + '0.00';
-            animateCountUp(totalElement, 0, finalTotal, 1500);
-        }
-    }, 500);
-});
 
-// Category Management Functions
-function showCategoriesModal() {
-    const modal = document.getElementById('categoriesModal');
-    modal.classList.remove('hidden');
-    loadCategories();
-}
+    // Category Management Functions
+    function showCategoriesModal() {
+        const modal = document.getElementById("categoriesModal");
+        modal.classList.remove("hidden");
+        loadCategories();
+    }
 
-function closeCategoriesModal() {
-    const modal = document.getElementById('categoriesModal');
-    modal.classList.add('hidden');
-    // Reload page to refresh category dropdown
-    location.reload();
-}
+    function closeCategoriesModal() {
+        const modal = document.getElementById("categoriesModal");
+        modal.classList.add("hidden");
+        // Reload page to refresh category dropdown
+        location.reload();
+    }
 
-async function loadCategories() {
-    try {
-        const response = await fetch('/api/budget/categories');
-        const data = await response.json();
-        
-        const tbody = document.getElementById('categoriesTableBody');
-        tbody.innerHTML = '';
-        
-        data.categories.forEach(cat => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+    async function loadCategories() {
+        try {
+            const response = await fetch("/api/budget/categories");
+            const data = await response.json();
+
+            const tbody = document.getElementById("categoriesTableBody");
+            tbody.innerHTML = "";
+
+            data.categories.forEach((cat) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
                 <td class="px-6 py-4">
                     <span class="text-sm font-medium text-gray-900 dark:text-white">${cat.name}</span>
                 </td>
@@ -617,97 +852,97 @@ async function loadCategories() {
                     </button>
                 </td>
             `;
-            tbody.appendChild(tr);
-        });
-    } catch (error) {
-        console.error('Error loading categories:', error);
-        alert('Failed to load categories');
-    }
-}
-
-async function addCategory() {
-    const nameInput = document.getElementById('newCategoryName');
-    const name = nameInput.value.trim();
-    
-    if (!name) {
-        nameInput.focus();
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/categories', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ name, monthly_limit: 0 })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            nameInput.value = '';
-            loadCategories();
-        } else {
-            console.error(data.error || 'Failed to add category');
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error("Error loading categories:", error);
+            alert("Failed to load categories");
         }
-    } catch (error) {
-        console.error('Error:', error);
     }
-}
 
-async function editCategory(id, currentName) {
-    const newName = prompt('Enter new category name:', currentName);
-    
-    if (!newName || newName === currentName) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/categories/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ name: newName })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            loadCategories();
-        } else {
-            console.error(data.error || 'Failed to update category');
+    async function addCategory() {
+        const nameInput = document.getElementById("newCategoryName");
+        const name = nameInput.value.trim();
+
+        if (!name) {
+            nameInput.focus();
+            return;
         }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
 
-async function deleteCategory(id, name) {
-    try {
-        const response = await fetch(`/api/categories/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-Token': '{{ csrf_token() }}'
+        try {
+            const response = await fetch("/api/categories", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": "{{ csrf_token() }}",
+                },
+                body: JSON.stringify({ name, monthly_limit: 0 }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                nameInput.value = "";
+                loadCategories();
+            } else {
+                console.error(data.error || "Failed to add category");
             }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            loadCategories();
-        } else {
-            // Show error for categories in use
-            if (data.error && data.error.includes('Cannot delete')) {
-                console.error(data.error);
-            }
+        } catch (error) {
+            console.error("Error:", error);
         }
-    } catch (error) {
-        console.error('Error:', error);
     }
-}
+
+    async function editCategory(id, currentName) {
+        const newName = prompt("Enter new category name:", currentName);
+
+        if (!newName || newName === currentName) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": "{{ csrf_token() }}",
+                },
+                body: JSON.stringify({ name: newName }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                loadCategories();
+            } else {
+                console.error(data.error || "Failed to update category");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+
+    async function deleteCategory(id, name) {
+        try {
+            const response = await fetch(`/api/categories/${id}`, {
+                method: "DELETE",
+                headers: {
+                    "X-CSRF-Token": "{{ csrf_token() }}",
+                },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                loadCategories();
+            } else {
+                // Show error for categories in use
+                if (data.error && data.error.includes("Cannot delete")) {
+                    console.error(data.error);
+                }
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
 </script>
 {% endblock %}
